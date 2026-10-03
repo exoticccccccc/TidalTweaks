@@ -100,11 +100,16 @@ async function clean(opts) {
   if (opts && opts.includeRecycleBin) {
     try {
       const before = await recycleBinBytes();
+      // Silent: runPS carries -WindowStyle Hidden + windowsHide:true (see core/exec.js).
       await runPS('Clear-RecycleBin -Force -ErrorAction SilentlyContinue', 60000);
       freed += before;
     } catch { errors++; }
   }
-  return { ok: true, freed, deleted, errors, message: `Freed ${freed} bytes.` };
+  const mb = (freed / 1048576).toFixed(1);
+  const summary = errors > 0
+    ? `Cleanup complete — ${deleted} file(s), ${mb} MB freed (${errors} locked/skipped).`
+    : `Cleanup complete — ${deleted} file(s), ${mb} MB freed.`;
+  return { ok: true, freed, deleted, errors, message: summary };
 }
 
 module.exports = { scan, clean };

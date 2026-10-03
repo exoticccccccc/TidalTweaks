@@ -149,7 +149,6 @@
     paintGpu();
     await refresh();
   };
+  // Batch 7: lazy — GPU text + list load on first open via _show, not at boot.
   wire();
-  paintGpu();
-  refresh();
 })();

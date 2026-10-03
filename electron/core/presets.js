@@ -1,164 +1,98 @@
 'use strict';
 /* ============================================================================
- * core/presets.js — one-click tweak STACKS (the Risxn "products" idea, done
- * the Tidal way: transparent contents, single restore point, single undo).
- * A preset is { id, title, desc, pro, warn, ids[] }. The runner in main.js
- * creates ONE restore point for the whole stack and logs ONE undo entry, so
- * "Undo last tweak" rolls back the entire preset in one go.
+ * core/presets.js — one-click tweak STACKS (Batch 5 remodel).
+ * ----------------------------------------------------------------------------
+ * Old 15-preset set (fps-boost/pro-gamer/ghost/eco/per-game/lowend/midend/
+ * highend/overdrive) DELETED per user request — audit found: heavy overlap
+ * (lowend ⊂ midend ⊂ highend ⊂ overdrive), `overdrive` bundled a VPN-breaking
+ * stack-reset + minutes-long cleanmgr GUI + non-revertable AppX removals
+ * behind one click, and per-game packs duplicated 5-6 identical safe tweaks.
  *
- * CUSTOM PRESETS (local-only, never in git): <userData>/custom-presets.json
- * holds an ARRAY of the same shape. main.js merges them into preset:list, so
- * private stacks (like a machine-specific LowEnd pack) live ONLY on that PC.
- * Shape is validated strictly; entries referencing unknown tweak ids are
- * skipped silently (a typo must never break the built-in list).
+ * New set (9 focused stacks, Issue 5 spec): Max FPS / Low Latency /
+ * Competitive / Responsiveness / Privacy Max / Debloat Safe+Aggressive /
+ * Battery / Focus. Every id below is a live TWEAK_REGISTRY key (verified
+ * Batch 5); redundant pairs deliberately excluded (e.g. net-no-delack already
+ * covers TcpDelAckTicks=0, so net-delack-zero is NOT bundled with it).
+ * Runner in main.js creates ONE restore point + ONE undo entry ('preset:'+id)
+ * per stack; revert via preset:revert.
+ *
+ * CUSTOM PRESETS (local-only): <userData>/custom-presets.json, same shape.
  * ========================================================================== */
 const fs = require('node:fs');
 const path = require('node:path');
 
 const PRESETS = [
   {
-    id: 'fps-boost',
-    title: 'FPS Boost — starter pack',
-    desc: 'Safe one-click wins for any PC. All Free, all HKCU, zero risk.',
-    pro: false,
+    id: 'gaming-max-fps',
+    title: 'Gaming — Max FPS',
+    desc: 'For fps chasers: kills capture overhead, unlocks GPU scheduling + top power plan, stops background drag. Who: gamers on any GPU.',
     os: 'both',
-    warn: 'Applies 6 safe tweaks: Game Bar off, FSO bypass, Game Mode on, instant menus, Sticky Keys off, DNS flush.\nNo reboot needed.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'vis-menu-delay', 'vis-no-sticky', 'net-flush-dns'],
+    warn: 'Applies 8 tweaks: Game Bar/DVR off, HAGS on, Ultimate plan, FSO bypass, background apps off, Search indexing off, SysMain off.\nHAGS needs a REBOOT + ADMIN. One restore point covers all eight.',
+    ids: ['game-bar-off', 'game-hags-on', 'game-power-ultimate', 'game-no-fs-optim', 'game-bg-apps-off', 'adv-no-indexing', 'adv-no-sysmain', 'game-mode-win-on'],
   },
   {
-    id: 'pro-gamer',
-    title: 'Pro Gamer stack',
-    desc: 'The full latency pipeline: power, GPU scheduling, network, input.',
-    pro: true,
+    id: 'gaming-low-latency',
+    title: 'Gaming — Low Latency',
+    desc: 'For twitch shooters: faster ACKs, no traffic shaping, foreground priority, tick/timer tuning. Who: competitive players on stable PCs.',
     os: 'both',
-    warn: 'Applies 9 tweaks (Ultimate plan, HAGS, Nagle off, throttling off, responsiveness, input queues, FSO bypass, bg apps off).\nHAGS needs a REBOOT. One restore point covers all nine.',
-    ids: [
-      'game-power-ultimate', 'game-hags-on', 'game-no-nagle',
-      'game-net-throttle-off', 'game-sys-responsiveness', 'game-input-latency',
-      'game-no-fs-optim', 'game-bg-apps-off', 'game-bar-off',
-    ],
+    warn: 'Applies 6 tweaks: Nagle off, delayed-ACK off (covers delack-zero, not duplicated), network throttling off, foreground priority 0x26, dynamic-tick off, input queues.\nDynamic-tick needs REBOOT + ADMIN. Slightly more upstream ACK traffic.',
+    ids: ['game-no-nagle', 'net-no-delack', 'game-net-throttle-off', 'cpu-fg-priority', 'cpu-no-dynamictick', 'game-input-latency'],
   },
   {
-    id: 'ghost',
-    title: 'Ghost — privacy lockdown',
-    desc: 'All ten privacy tweaks in one click. The tin-foil-hat special.',
-    pro: true,
+    id: 'gaming-competitive',
+    title: 'Gaming — Competitive (Balanced)',
+    desc: 'Safe subset of both gaming stacks, no boot edits or security trade-offs. Who: ranked players who want stability first.',
     os: 'both',
-    warn: 'Applies all 10 privacy tweaks (telemetry, ad ID, location, hosts block, services, LSA, Credential Guard).\nLSA + Credential Guard need a REBOOT and Secure-Boot-capable hardware.',
-    ids: [
-      'priv-no-telemetry', 'priv-no-adid', 'priv-no-tailored',
-      'priv-no-suggestions', 'priv-no-cortana', 'priv-no-location',
-      'priv-block-trackers', 'priv-no-telemetry-svc',
-      'priv-lsa', 'priv-credential-guard',
-    ],
+    warn: 'Applies 7 safe tweaks: Game Bar off, FSO bypass, Game Mode on, raw mouse, throttling off, delayed-ACK off, responsiveness floor.\nNo reboot needed. Fully reversible.',
+    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'game-net-throttle-off', 'net-no-delack', 'game-sys-responsiveness'],
   },
   {
-    id: 'eco',
-    title: 'Eco — battery saver',
-    desc: 'Balanced plan, quiet background, frosted look back on. Laptops love it.',
-    pro: true,
+    id: 'desktop-responsiveness',
+    title: 'Desktop — Responsiveness',
+    desc: 'Makes Windows feel instant: no animation waits, instant menus, foreground boost. Who: everyone on HDDs or weak iGPUs.',
     os: 'both',
-    warn: 'Applies 4 tweaks: Balanced power plan, background apps off, delivery optimization off, transparency on.\nUndoes cleanly with one Undo.',
-    ids: ['power-balanced', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'vis-transparency-on'],
-  },
-  // ---- Per-game presets (all FREE) ----------------------------------------
-  // Each one applies safe game-ready tweaks AND registers the game's exes
-  // into your priority list, so Gaming → "Boost running now" picks them up.
-  {
-    id: 'game-fortnite',
-    title: 'Fortnite ready',
-    desc: 'Game Bar off, FSO bypass, instant menus, DNS flush + Fortnite exes saved.',
-    pro: false,
-    os: 'both',
-    games: ['FortniteClient-Win64-Shipping.exe', 'FortniteLauncher.exe'],
-    warn: 'Applies 5 safe tweaks and saves 2 Fortnite exes to your priority list.\nThen open Gaming → Boost running now while Fortnite is up.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mouse-raw', 'vis-menu-delay', 'net-flush-dns'],
+    warn: 'Applies 6 tweaks: window animations off, MenuShowDelay 0, transparency off, micro-animation bundle off, fast shutdown/logoff, foreground priority.\nWindows looks flatter but feels instant. Reversible.',
+    ids: ['vis-no-anim', 'vis-menu-delay', 'vis-transparency-off', 'vis-fx-custom-min', 'sys-fast-shutdown', 'cpu-fg-priority'],
   },
   {
-    id: 'game-valorant',
-    title: 'Valorant ready',
-    desc: 'No Sticky-Shift popups mid-clutch, FSO bypass + Riot exes saved.',
-    pro: false,
+    id: 'privacy-maximum',
+    title: 'Privacy — Maximum',
+    desc: 'Locks down tracking without breaking logins: telemetry, ad ID, Cortana, location, history. Who: privacy-focused users.',
     os: 'both',
-    games: ['VALORANT-Win64-Shipping.exe', 'RiotClientServices.exe'],
-    warn: 'Applies 6 safe tweaks and saves 2 Riot exes.\nNote: Vanguard may reset priorities — re-boost each session.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mouse-raw', 'game-keyboard-fast', 'vis-no-sticky', 'net-flush-dns'],
+    warn: 'Applies 7 tweaks: telemetry off, ad ID off, tailored experiences off, Cortana data off, location off, Activity History off, clipboard history off.\nMaps/Find-my-device and Win+V history stop working. No reboot. Reversible.',
+    ids: ['priv-no-telemetry', 'priv-no-adid', 'priv-no-tailored', 'priv-no-cortana', 'priv-no-location', 'adv-no-activity', 'adv-no-clipboard-hist'],
   },
   {
-    id: 'game-minecraft',
-    title: 'Minecraft ready',
-    desc: 'Distraction-free Java setup + launcher exes saved for boosting.',
-    pro: false,
+    id: 'debloat-safe',
+    title: 'Debloat — Safe',
+    desc: 'Removes only expendable extras + silences suggestions. No critical apps touched. Who: clean-install feel without risk.',
     os: 'both',
-    games: ['javaw.exe', 'MinecraftLauncher.exe', 'Minecraft.Windows.exe'],
-    warn: 'Applies 3 safe tweaks and saves Java + launcher exes.\nTip: allocate RAM in the launcher (Installations → More Options → -Xmx4G).',
-    ids: ['game-bar-off', 'vis-no-sticky', 'adv-no-tips'],
+    warn: 'Applies 7 tweaks: Cortana app + Xbox app removal (reinstall via Store if missed — NOT auto-revertable), Chrome background off, tips/sponsored-apps/Copilot/Widgets off.\nOne restore point; AppX removals need Store reinstall to come back.',
+    ids: ['debloat-cortana-app', 'debloat-xbox-app', 'debloat-chrome-bg', 'adv-no-tips', 'adv-consumer-feats', 'adv-no-copilot', 'adv-no-widgets'],
   },
   {
-    id: 'game-cod',
-    title: 'Call of Duty ready',
-    desc: 'Low-ping starter: Nagle stays Pro, but DNS flush + FSO bypass help free.',
-    pro: false,
+    id: 'debloat-aggressive',
+    title: 'Debloat — Aggressive',
+    desc: 'Safe set plus OneDrive removal + Xbox services/bar kills. Who: gamers who never touch Xbox/OneDrive. Edge is NOT touched.',
     os: 'both',
-    games: ['cod.exe'],
-    warn: 'Applies 6 safe tweaks and saves cod.exe.\nIf your install uses a different exe, add it in Gaming → Priority for my games.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mouse-raw', 'game-keyboard-fast', 'net-flush-dns', 'vis-no-sticky'],
+    warn: 'Applies 10 tweaks: safe set + OneDrive uninstall (files stay in cloud), Xbox services off, Xbox Game Bar off.\nXbox sign-in/party chat stops until reverted. Edge untouched. Reboot recommended.',
+    ids: ['debloat-cortana-app', 'debloat-xbox-app', 'debloat-chrome-bg', 'adv-no-tips', 'adv-consumer-feats', 'adv-no-copilot', 'adv-no-widgets', 'debloat-onedrive', 'svc-xbox-off', 'adv-no-xbox-bar'],
   },
   {
-    id: 'lowend-pc',
-    title: 'Low-End PC pack',
-    desc: 'Safe speed for weak desktops: background drag killed, FX flattened, updates quieted. No boot edits, no reboot needed.',
+    id: 'battery-saver',
+    title: 'Battery Saver (laptops)',
+    desc: 'Stretches unplugged time: Balanced plan, quiet background, less disk churn. Who: laptops on the go. Screen brightness stays manual (see warn).',
     os: 'both',
-    warn: 'Applies 19 safe tweaks (Base tier and below). Nothing here needs a reboot. Fully reversible from Restore.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'vis-menu-delay', 'vis-no-shadows', 'vis-no-drag-full', 'vis-fx-custom-min', 'vis-no-sticky', 'debloat-visual-fx', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-tips', 'net-flush-dns', 'sys-fast-shutdown', 'power-no-usb-suspend', 'adv-no-search-highlights', 'vis-no-taskview', 'adv-no-copilot'],
+    warn: 'Applies 5 tweaks: Balanced plan, background apps off, delivery optimization off, Search indexing off, SysMain off.\nScreen brightness has no safe programmatic API — set 70% manually (Settings → Display). Fully reversible.',
+    ids: ['power-balanced', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-indexing', 'adv-no-sysmain'],
   },
   {
-    id: 'lowend-laptop',
-    title: 'Low-End Laptop pack',
-    desc: 'The PC pack plus cooling-first power, auto RAM trimming and Balanced-friendly tweaks for thin, hot chassis.',
+    id: 'work-focus',
+    title: 'Work — Focus Mode',
+    desc: 'Distraction-free desktop: tips/feeds/widgets/bar off, telemetry + feedback quiet. Who: students, office, streamers.',
     os: 'both',
-    warn: 'Applies 23 tweaks (Base tier and below). Keep it plugged in and cooled. Fully reversible from Restore.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'vis-menu-delay', 'vis-no-shadows', 'vis-no-drag-full', 'vis-fx-custom-min', 'vis-no-sticky', 'debloat-visual-fx', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-tips', 'net-flush-dns', 'sys-fast-shutdown', 'power-no-usb-suspend', 'adv-no-search-highlights', 'vis-no-taskview', 'adv-no-copilot', 'power-active-cooling', 'ram-standby-task', 'power-balanced', 'sys-storage-sense'],
-  },
-  {
-    id: 'midend-pc',
-    title: 'Mid-Range PC pack',
-    desc: 'Low-end base plus the real performance pipeline: boost, throttling off, HAGS, Nagle trio, indexing off, Ultimate plan.',
-    os: 'both',
-    warn: 'Applies 33 tweaks (Pro tier). HAGS needs a REBOOT to take effect. Fully reversible from Restore.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'vis-menu-delay', 'vis-no-shadows', 'vis-no-drag-full', 'vis-fx-custom-min', 'vis-no-sticky', 'debloat-visual-fx', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-tips', 'net-flush-dns', 'sys-fast-shutdown', 'power-no-usb-suspend', 'adv-no-search-highlights', 'vis-no-taskview', 'adv-no-copilot', 'cpu-boost-mode', 'cpu-no-throttle', 'game-hags-on', 'game-no-nagle', 'game-net-throttle-off', 'game-sys-responsiveness', 'game-input-latency', 'net-timed-wait', 'net-max-user-port', 'power-ultimate', 'adv-no-indexing', 'adv-no-sysmain', 'debloat-chrome-bg', 'net-fast-dns-cloudflare'],
-  },
-  {
-    id: 'midend-laptop',
-    title: 'Mid-Range Laptop pack',
-    desc: 'Mid-range PC stack minus the furnace settings, plus active cooling. Performance without melting the keyboard.',
-    os: 'both',
-    warn: 'Applies 33 tweaks (Pro tier). Skips Aggressive boost and min-state lock to protect thermals. HAGS needs a REBOOT. Fully reversible.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'vis-menu-delay', 'vis-no-shadows', 'vis-no-drag-full', 'vis-fx-custom-min', 'vis-no-sticky', 'debloat-visual-fx', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-tips', 'net-flush-dns', 'sys-fast-shutdown', 'power-no-usb-suspend', 'adv-no-search-highlights', 'vis-no-taskview', 'adv-no-copilot', 'cpu-no-throttle', 'game-hags-on', 'game-no-nagle', 'game-net-throttle-off', 'game-sys-responsiveness', 'game-input-latency', 'net-timed-wait', 'net-max-user-port', 'power-ultimate', 'adv-no-indexing', 'adv-no-sysmain', 'debloat-chrome-bg', 'net-fast-dns-cloudflare', 'power-active-cooling'],
-  },
-  {
-    id: 'highend-pc',
-    title: 'High-End PC pack',
-    desc: 'Everything: bcdedit timer stack, Spectre mitigations off, timer resolution, MSI mode, NIC surgery. For rigs with headroom.',
-    os: 'both',
-    warn: 'Applies 45 tweaks (Extreme tier) including BOOT CONFIG edits (HPET, dynamictick, TSC, x2apic) and a SECURITY TRADE-OFF (Spectre mitigations off).\nREBOOT REQUIRED. Only for machines you can afford to troubleshoot. Fully reversible from Restore + reboot.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'vis-menu-delay', 'vis-no-shadows', 'vis-no-drag-full', 'vis-fx-custom-min', 'vis-no-sticky', 'debloat-visual-fx', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-tips', 'net-flush-dns', 'sys-fast-shutdown', 'power-no-usb-suspend', 'adv-no-search-highlights', 'vis-no-taskview', 'adv-no-copilot', 'cpu-boost-mode', 'cpu-no-throttle', 'game-hags-on', 'game-no-nagle', 'game-net-throttle-off', 'game-sys-responsiveness', 'game-input-latency', 'net-timed-wait', 'net-max-user-port', 'power-ultimate', 'adv-no-indexing', 'adv-no-sysmain', 'debloat-chrome-bg', 'net-fast-dns-cloudflare', 'cpu-no-parking', 'cpu-fg-priority', 'game-no-hpet', 'cpu-no-dynamictick', 'cpu-tsc-enhanced', 'cpu-no-spec-mit', 'cpu-x2apic', 'cpu-timer-res', 'gpu-msi-mode', 'net-nic-powersave-off', 'net-nic-eco-off', 'power-no-pcie'],
-  },
-  {
-    id: 'highend-laptop',
-    title: 'High-End Laptop pack',
-    desc: 'High-end stack minus the security trade-off and idle-tick edits, plus active cooling. Max fps you can actually sustain.',
-    os: 'both',
-    warn: 'Applies 44 tweaks (Extreme tier: HPET, TSC, x2APIC, timer resolution included).\nSkips Spectre-mitigation removal and dynamic-tick edits to protect battery/security. REBOOT REQUIRED. Fully reversible.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'vis-menu-delay', 'vis-no-shadows', 'vis-no-drag-full', 'vis-fx-custom-min', 'vis-no-sticky', 'debloat-visual-fx', 'adv-no-bg-apps', 'adv-no-delivery-opt', 'adv-no-tips', 'net-flush-dns', 'sys-fast-shutdown', 'power-no-usb-suspend', 'adv-no-search-highlights', 'vis-no-taskview', 'adv-no-copilot', 'cpu-boost-mode', 'cpu-no-throttle', 'game-hags-on', 'game-no-nagle', 'game-net-throttle-off', 'game-sys-responsiveness', 'game-input-latency', 'net-timed-wait', 'net-max-user-port', 'power-ultimate', 'adv-no-indexing', 'adv-no-sysmain', 'debloat-chrome-bg', 'net-fast-dns-cloudflare', 'cpu-no-parking', 'cpu-fg-priority', 'game-no-hpet', 'cpu-tsc-enhanced', 'cpu-x2apic', 'cpu-timer-res', 'gpu-msi-mode', 'net-nic-powersave-off', 'net-nic-eco-off', 'power-no-pcie', 'power-active-cooling'],
-  },
-  {
-    id: 'overdrive',
-    title: 'Tidal Overdrive — EVERYTHING',
-    desc: 'The whole arsenal in one click: gaming + CPU + network + debloat stacks. For a fresh-feeling machine in ~5 minutes.',
-    os: 'both',
-    warn: 'Applies ~55 tweaks (Extreme tier): full gaming, CPU, network and debloat stacks including BOOT edits, Spectre-mitigation removal, timer resolution, NIC surgery, OneDrive/Cortana/Xbox app removal and a network-stack reset.\nREBOOT REQUIRED (twice ideally: once after, to settle drivers). VPN clients need re-setup after the stack reset. Edge is NOT touched. Takes several minutes — watch the log. Fully reversible EXCEPT removed apps (reinstall from Store).',
-    ids: ['game-mode-master', 'game-power-ultimate', 'game-bar-off', 'game-hags-on', 'game-no-nagle', 'game-net-throttle-off', 'game-sys-responsiveness', 'game-input-latency', 'game-no-hpet', 'game-no-fs-optim', 'game-bg-apps-off', 'game-mode-win-on', 'game-mouse-raw', 'game-keyboard-fast', 'gpu-msi-mode', 'cpu-boost-mode', 'cpu-no-throttle', 'cpu-no-interrupt-steering', 'cpu-timer-serialization', 'cpu-no-energy-est', 'cpu-no-parking', 'cpu-no-hibernate', 'cpu-min-state-100', 'cpu-no-pcie-link', 'cpu-bios-utc', 'cpu-fg-priority', 'cpu-no-dynamictick', 'cpu-tsc-enhanced', 'cpu-no-spec-mit', 'cpu-x2apic', 'cpu-timer-res', 'cpu-no-idle-states', 'net-timed-wait', 'net-max-user-port', 'net-flush-dns', 'net-no-smb-limit', 'net-nic-powersave-off', 'net-nic-eco-off', 'net-qos-limit', 'net-reset-stack', 'net-ecn-on', 'net-rsc-off', 'net-no-tunnel', 'net-adapter-restart', 'debloat-onedrive', 'debloat-visual-fx', 'debloat-no-hibernate', 'debloat-disk-cleanup', 'debloat-chrome-bg', 'debloat-cortana-app', 'debloat-xbox-app', 'power-no-usb-suspend', 'power-no-disk-sleep', 'adv-no-indexing', 'adv-no-sysmain', 'adv-no-delivery-opt', 'adv-no-xbox-bar', 'adv-no-bg-apps', 'vis-no-anim', 'vis-fx-custom-min', 'sys-fast-shutdown'],
+    warn: 'Applies 7 tweaks: tips off, news feed off, Widgets off, Xbox Game Bar off, Xbox services off, telemetry off, feedback prompts Never.\nWin+W widgets and Game Bar stop until reverted. No reboot.',
+    ids: ['adv-no-tips', 'adv-no-news', 'adv-no-widgets', 'adv-no-xbox-bar', 'svc-xbox-off', 'priv-no-telemetry', 'priv-no-feedback'],
   },
 ];
 

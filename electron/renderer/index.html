@@ -147,10 +147,6 @@
         <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
         <span>Benchmark</span>
       </button>
-      <button class="nav-item" data-tab="profiles">
-        <svg viewBox="0 0 24 24"><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01M17.3 5H6.7a4 4 0 00-3.9 3.1L1.5 13a3 3 0 005.2 2.9L9 13h6l2.3 2.9a3 3 0 005.2-2.9l-1.3-4.9A4 4 0 0017.3 5z"/></svg>
-        <span>Profiles</span>
-      </button>
       <div class="nav-sep"><span>PRO</span></div>
       <button class="nav-item" data-tab="gaming" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01M17.3 5H6.7a4 4 0 00-3.9 3.1L1.5 13a3 3 0 005.2 2.9L9 13h6l2.3 2.9a3 3 0 005.2-2.9l-1.3-4.9A4 4 0 0017.3 5z"/></svg>
@@ -206,7 +202,7 @@
         <span>Owner</span>
       </button>
     </nav>
-    <div class="side-foot">v2.0 · Win 10/11</div>
+    <div class="side-foot" id="side-foot">v2.4.4 · Win 10/11</div>
   </aside>
 
   <!-- ======================= Content pages =======================
@@ -697,21 +693,6 @@
       </div>
     </section>
 
-    <section class="page" id="page-profiles">
-      <div class="page-head"><h1>🎮 Profiles</h1><p>One-click optimization per game</p></div>
-      <div class="glass card">
-        <div class="ch-card-head"><h3>Game Profiles</h3>
-          <div class="row" style="margin:0">
-            <button class="btn secondary" id="prof-create" title="Build a custom bundle from tweak ids">+ New</button>
-            <button class="btn secondary" id="prof-import" title="Paste an exported profile JSON">Import</button>
-            <button class="btn secondary" id="prof-redeem" title="Paste a TT1P- share code">Redeem code</button>
-          </div>
-        </div>
-        <p class="dim">Apply tweaks per game, auto-apply when it launches, share via code. One restore point + one undo per apply.</p>
-        <div id="prof-list"><p class="dim">Loading profiles…</p></div>
-      </div>
-    </section>
-
     <section class="page" id="page-restore">
       <div class="page-head"><h1>Safety &amp; Restore</h1><p>Restore points and undo — available to everyone</p></div>
       <div class="glass card">
@@ -762,6 +743,8 @@
             <option value="inferno">Inferno (ember gradient)</option>
             <option value="candy">Candy (pink gradient)</option>
             <option value="toxic">Toxic (acid gradient)</option>
+            <option value="oled">OLED (true black + electric cyan)</option>
+            <option value="pulse">Pulse (near-black neon magenta)</option>
           </select>
           <label class="dim" for="accent-select">Accent</label>
           <select id="accent-select" class="input">
@@ -812,10 +795,14 @@
           </select>
         </div>
         <p class="dim" id="lite-note"></p>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="perf-mode" /><span class="box"></span><span>Performance Mode — 5s monitor polling, no animations (low-end PCs)</span></label>
+        </div>
+        <p class="dim">Persists on this PC. While on: hardware monitor drops to 1 update / 5s, tab polling pauses in background, animations off, helper workloads deferred.</p>
       </div>
       <div class="glass card">
         <h3>Connection</h3>
-        <p class="dim">Online mode enables server features when they arrive. Everything local — tweaks, crosshair, benchmarks, profiles — works fully offline.</p>
+        <p class="dim">Online mode enables server features when they arrive. Everything local — tweaks, crosshair, benchmarks, presets — works fully offline.</p>
         <div class="row" id="conn-modes">
           <button class="btn secondary conn-mode" data-mode="auto">Auto</button>
           <button class="btn secondary conn-mode" data-mode="online">Online</button>
@@ -829,8 +816,12 @@
         <button class="btn danger" id="settings-revert-all">⟲&nbsp; Revert all changes</button>
       </div>
       <div class="glass card"><h3>About</h3>
-        <p class="dim">TidalTweaks v2.4.4 · Electron · Windows 10/11 · No accounts, no telemetry, no payment processors.</p>
+        <p class="dim" id="about-line">TidalTweaks · Electron · Windows 10/11 · No accounts, no telemetry, no payment processors.</p>
         <p class="dim">Antivirus flags? False positive — this app edits the registry and runs PowerShell like every optimizer does, so heuristics complain. Full source is on GitHub; read every line.</p>
+        <div class="row">
+          <button class="btn secondary" id="update-check">↻&nbsp; Check for updates</button>
+        </div>
+        <p class="dim" id="update-status"></p>
       </div>
     </section>
   </main>
@@ -896,7 +887,6 @@
 <script src="tabs/advanced.js" defer></script>
 <script src="tabs/services.js" defer></script>
 <script src="tabs/benchmark.js" defer></script>
-<script src="tabs/profiles.js" defer></script>
 <script src="tabs/presets.js" defer></script>
 <script src="tabs/library.js" defer></script>
 <script src="tabs/restore.js" defer></script>

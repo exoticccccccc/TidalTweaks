@@ -219,6 +219,10 @@ function ensureWindow() {
   const { width, height } = primarySize();
   const path = require('node:path');
 
+  // Batch 4 (Issue 3-A): INDEPENDENT overlay. Own fullscreen window that
+  // outlives the main panel — X/hide on main never touches this. Only the
+  // in-app "Turn crosshair off" toggle / tray / Ctrl+Shift+X (which flip
+  // config.enabled) hide it, and only app.quit() destroys it.
   overlay = new BrowserWindow({
     width,
     height,
@@ -233,9 +237,10 @@ function ensureWindow() {
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
+    closable: false, // user Alt+F4 etc. can never kill the overlay; destroy() still can
     skipTaskbar: true,
     focusable: false, // never steal game focus
-    show: false,
+    show: false, // syncVisibility() shows it only when config.enabled
     backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),

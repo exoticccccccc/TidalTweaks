@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('api', {
   preset: {
     list: () => ipcRenderer.invoke('preset:list'),
     apply: (id) => ipcRenderer.invoke('preset:apply', { id }),
+    revert: (id) => ipcRenderer.invoke('preset:revert', { id }),
     // Live step events {preset, phase, index, total, id, ok, message}.
     // Returns an unsubscribe function — callers must clean up.
     onProgress: (cb) => {
@@ -106,6 +107,17 @@ contextBridge.exposeInMainWorld('api', {
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     set: (patch) => ipcRenderer.invoke('settings:set', patch || {}),
+  },
+
+  // — App version + update check (Batch 2 version source, Batch 9 updater) —
+  app: {
+    version: () => ipcRenderer.invoke('app:version'),
+    checkUpdate: () => ipcRenderer.invoke('app:check-update'),
+    onUpdateAvailable: (cb) => {
+      const listener = (_e, info) => cb(info);
+      ipcRenderer.on('app:update-available', listener);
+      return () => ipcRenderer.removeListener('app:update-available', listener);
+    },
   },
 
   // — Crosshair overlay (separate transparent always-on-top window) —

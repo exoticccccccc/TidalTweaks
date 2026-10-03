@@ -608,6 +608,6 @@
     try { await TT.refreshLicense(false); } catch (e) { /* tier read is best-effort */ }
     await refresh();
   };
+  // Batch 7: lazy — config loads on first open via _show, not at boot.
   wire();
-  refresh();
 })();

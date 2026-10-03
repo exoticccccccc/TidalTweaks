@@ -555,6 +555,35 @@ body[data-theme="toxic"] {
   --glass-rgb: 20, 64, 32; --deep-rgb: 4, 20, 10; --panel2-rgb: 26, 78, 40;
   --border: #1f6b35; --border-dim: #154826;
 }
+/* OLED — TRUE black (pixel-off) + electric cyan pop. Native accent: cyan.
+ * Pure #000 backgrounds for OLED panels; glass stays translucent so depth
+ * survives, borders glow cyan. */
+body[data-theme="oled"] {
+  --bg0: #000000; --bg1: #000000; --bg2: #000000;
+  --text: #f2f7ff; --dim: #b9c8e2; --faint: #7e8ba3;
+  --glass-rgb: 10, 16, 28; --deep-rgb: 0, 0, 0; --panel2-rgb: 14, 24, 40;
+  --border: #1e3a5f; --border-dim: #12233c;
+  --glass-line: rgba(34, 211, 238, 0.22);
+}
+/* Pulse — near-black neon magenta. Native accent: violet. */
+body[data-theme="pulse"] {
+  --bg0: #0d0214; --bg1: #07010c; --bg2: #020104;
+  --text: #faefff; --dim: #c9b3e0; --faint: #8d76a8;
+  --glass-rgb: 38, 10, 58; --deep-rgb: 10, 2, 18; --panel2-rgb: 48, 14, 72;
+  --border: #5b2a86; --border-dim: #3d1d5c;
+  --glass-line: rgba(157, 123, 255, 0.25);
+}
+/* Performance Mode (Batch 8, Issue 4): kill motion like lite does, harder.
+ * Layout untouched — only animations/transitions/shimmers stop. */
+body.perf *, body.perf *::before, body.perf *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+body.perf .btn.pulse, body.perf .ch-toggle,
+body.perf .conn-dot.online i, body.perf .bar-fill.bench-busy::after {
+  animation: none !important;
+}
 /* Arctic + Lite: the navy lite solids would clash with the light theme. */
 body.lite[data-theme="arctic"] .glass { background: #f2f6fc; }
 body.lite[data-theme="arctic"] #titlebar,

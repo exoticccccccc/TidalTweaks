@@ -57,19 +57,21 @@
   }
 
   /* --------------------------- CPU/RAM/Disk ----------------------------- */
+  // Batch 5 remodel: same engine, friendlier failures (no raw stacks in UI).
+  // (No re-entry guard here — runAll sequences runCore x3 with running=true.)
   async function runCore(test) {
     setBusy(test, true);
     status(`Running ${test.toUpperCase()}… (${Math.round(DUR_MS[duration] / 1000)}s, app stays usable)`);
     let res;
     try { res = await api().runTest(test, DUR_MS[duration]); }
-    catch (e) { res = { ok: false, message: String(e) }; }
+    catch (e) { res = { ok: false }; }
     setBusy(test, false);
     const bar = $(`bench-${test}-bar`);
     if (bar) bar.style.width = res && res.ok ? '100%' : '0%';
     if (!res || !res.ok) {
       setScore(test, null);
-      $(`bench-${test}-detail`).textContent = `✗ ${((res && res.message) || 'failed')}`;
-      TT.toast(`${test.toUpperCase()} failed: ${(res && res.message) || 'unknown'}`, 'error', 5000);
+      $(`bench-${test}-detail`).textContent = '✗ Test hit a snag — try Quick duration and close heavy apps first.';
+      TT.toast(`${test.toUpperCase()} hit a snag — try again with Quick duration.`, 'error', 5000);
       return null;
     }
     session[test] = res;
@@ -200,7 +202,7 @@
         overall: overall(session),
       });
       if (r && r.ok) await refreshHistory();
-    } catch (e) { TT.toast('Save failed: ' + String(e), 'error', 4000); }
+    } catch (e) { TT.toast('Could not save this run — history file may be locked.', 'error', 4000); }
   }
   /* Single-test saves carry ONLY the test that just ran (nulls elsewhere),
    * so history never mixes fresh numbers with stale session leftovers.
@@ -212,7 +214,7 @@
       entry[test] = res;
       const r = await api().save(entry);
       if (r && r.ok) await refreshHistory();
-    } catch (e) { TT.toast('Save failed: ' + String(e), 'error', 4000); }
+    } catch (e) { TT.toast('Could not save this run — history file may be locked.', 'error', 4000); }
   }
 
   async function runAll() {

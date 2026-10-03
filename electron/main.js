@@ -18,7 +18,7 @@
  * the app makes ZERO license network calls (see license:validate).
  * ========================================================================== */
 
-const { app, BrowserWindow, ipcMain, shell, screen, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, screen, globalShortcut, Tray, Menu, nativeImage } = require('electron');
 const path = require('node:path');
 const os = require('node:os');
 const Store = require('electron-store');
@@ -33,6 +33,7 @@ const store = new Store({
     code: null,
     activatedAt: null,
     liteMode: 'auto', // 'auto' | 'on' | 'off' — see resolveLite()
+    perfMode: false, // Batch 8 Performance Mode (Issue 4): 5s polling, no anim
     theme: 'tsunami',  // tsunami | abyss | royal | emerald (Settings → Appearance)
     accent: 'blue',    // blue | gold | violet | mint | rose
     // Crosshair overlay: last used design (see core/crosshair.js) + Pro saves.
@@ -167,10 +168,6 @@ const TWEAK_REGISTRY = {
   'net-rsc-off': netTweaks.rscOff,
   'net-no-tunnel': netTweaks.tunnelsOff,
   'net-adapter-restart': netTweaks.adapterRestart,
-  'net-nic-powersave-off': netTweaks.nicPowersaveOff,
-  'net-nic-eco-off': netTweaks.nicEcoOff,
-  'net-qos-limit': netTweaks.qosLimitZero,
-  'net-reset-stack': netTweaks.resetStack,
   // — Privacy & security (core/privacy.js) —
   'priv-no-telemetry': privacyTweaks.disableTelemetry,
   'priv-no-adid': privacyTweaks.disableAdId,
@@ -240,7 +237,6 @@ const TWEAK_REGISTRY = {
   'power-cpu-min-100': powerTweaks.setMinProcessorState100,
   'power-no-pcie': powerTweaks.disablePcieLinkState,
   'power-no-aoac': powerTweaks.disableAoAc,
-  'power-no-modern-standby': powerTweaks.disableModernStandby,
   'power-lid-nothing': powerTweaks.lidCloseNothing,
   'power-sleep-never': powerTweaks.sleepNever,
   'power-no-auto-hibernate': powerTweaks.noAutoHibernate,
@@ -311,9 +307,91 @@ for (const [id, def] of Object.entries(servicesIdx.DEFS)) {
  * Window
  * ========================================================================== */
 let win = null;
+let tray = null;
+let isQuitting = false;
+const TOGGLE_HOTKEY = 'CommandOrControl+Shift+X';
+
+let APP_VERSION_EARLY = '2.4.4';
+try { APP_VERSION_EARLY = require('./package.json').version || APP_VERSION_EARLY; } catch { /* ignore */ }
 
 // Single instance: focus the existing window instead of opening a second copy.
 if (!app.requestSingleInstanceLock()) app.quit();
+
+function showMain() {
+  try {
+    if (!win || win.isDestroyed()) createWindow();
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  } catch { /* ignore */ }
+}
+
+function crosshairEnabledNow() {
+  try { return !!(crosshair.getConfig && crosshair.getConfig().enabled); }
+  catch { return false; }
+}
+
+function buildTrayMenu() {
+  const on = crosshairEnabledNow();
+  // Green/grey equivalent until Batch 8 icon art: checked + explicit ON/OFF label.
+  return Menu.buildFromTemplate([
+    {
+      id: 'toggle',
+      label: on ? '● Crosshair ON — turn off (Ctrl+Shift+X)' : '○ Crosshair OFF — turn on (Ctrl+Shift+X)',
+      type: 'checkbox',
+      checked: on,
+      click: () => {
+        try {
+          crosshair.ensureWindow();
+          const r = crosshair.toggle();
+          updateTrayState();
+          if (r && r.config && win && !win.isDestroyed()) {
+            try { win.webContents.send('crosshair:update', r.config); } catch { /* overlay already got it */ }
+          }
+        } catch { /* ignore */ }
+      },
+    },
+    {
+      label: 'Open TidalTweaks',
+      click: () => showMain(),
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      },
+    },
+  ]);
+}
+
+// Batch 4 (Issue 3-B): tray persists with its own menu even when the main
+// window is hidden/closed. Checkbox + tooltip reflect live overlay state.
+function updateTrayState() {
+  try {
+    if (!tray) return;
+    const on = crosshairEnabledNow();
+    tray.setToolTip(on ? 'TidalTweaks — ● crosshair ON' : 'TidalTweaks — ○ crosshair OFF');
+    try { tray.setContextMenu(buildTrayMenu()); } catch { /* ignore */ }
+  } catch { /* ignore */ }
+}
+
+function ensureTray() {
+  if (tray) { updateTrayState(); return tray; }
+  try {
+    const iconPath = path.join(__dirname, 'assets', 'icon.png');
+    let img = null;
+    try { img = nativeImage.createFromPath(iconPath); } catch { img = null; }
+    tray = new Tray((img && !img.isEmpty()) ? img : nativeImage.createEmpty());
+    tray.setToolTip('TidalTweaks');
+    tray.setContextMenu(buildTrayMenu());
+    tray.on('click', () => showMain());
+    tray.on('double-click', () => showMain());
+    updateTrayState();
+  } catch (e) { console.error('tray init failed:', String((e && e.message) || e)); }
+  return tray;
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -335,11 +413,30 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  win.once('ready-to-show', () => win.show());
+  // Show IMMEDIATELY on ready-to-show; heavy work is deferred to setTimeout
+  // below so low-end PCs paint the skeleton instead of hanging with a busy cursor.
+  win.once('ready-to-show', () => {
+    try { win.show(); } catch { /* ignore */ }
+    // Defer non-critical startup AFTER the window is visible.
+    setTimeout(() => {
+      try { crosshair.ensureWindow(); } catch { /* ignore */ }
+      updateTrayState();
+    }, 500);
+    setTimeout(() => {
+      try {
+        conn.checkOnline(conn.PROBE_TIMEOUT_MS).then(() => pushConnState()).catch(() => {});
+      } catch { /* ignore */ }
+    }, 500);
+    setTimeout(() => {
+      // Reserved slot for the optional hardware helper (1s after show).
+      // Intentionally empty: no C# helper ships in this build, and nothing
+      // may block the main thread here.
+    }, 1000);
+  });
 
   // Keep the renderer's maximise/restore glyph in sync with the real state.
-  win.on('maximize', () => win.webContents.send('win:state', { maximized: true }));
-  win.on('unmaximize', () => win.webContents.send('win:state', { maximized: false }));
+  win.on('maximize', () => { try { win.webContents.send('win:state', { maximized: true }); } catch {} });
+  win.on('unmaximize', () => { try { win.webContents.send('win:state', { maximized: false }); } catch {} });
 
   // Never let pages navigate away / open popups inside the app shell.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -354,32 +451,33 @@ function createWindow() {
     crashes++;
     if (crashes <= 2 && win) {
       console.error(`renderer gone (${details.reason}), reloading…`);
-      win.reload();
+      try { win.reload(); } catch { /* ignore */ }
     }
   });
 
-  // Closing the main shell quits the app AND the crosshair overlay (the
-  // overlay alone must never keep the process alive headless).
-  win.on('closed', () => {
-    win = null;
-    try { crosshair.destroy(); } catch { /* ignore */ }
-    if (process.platform !== 'darwin') app.quit();
+  // X button hides to tray (crosshair + tray stay alive). Only Tray → Quit
+  // or app.quit() sets isQuitting and really tears everything down.
+  win.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      try { win.hide(); } catch { /* ignore */ }
+    }
   });
+  win.on('closed', () => { win = null; });
 }
 
 app.whenReady().then(() => {
-  createWindow();
-  // Crosshair overlay: separate transparent always-on-top window (see core/).
+  // Light init only on the critical path: store + crosshair config binding.
+  // No systeminformation, no WMI, no probe here — all deferred until shown.
   try {
     crosshair.init({ BrowserWindow, screen, store, getMainWindow: () => win });
-    crosshair.ensureWindow();
   } catch (e) { console.error('crosshair init failed:', String((e && e.message) || e)); }
-  // Connection mode: first probe decides the opening state (Online when the
-  // machine reaches the internet, Offline otherwise), pushed to the titlebar.
   try {
     conn.init({ store });
-    conn.checkOnline(conn.PROBE_TIMEOUT_MS).then(() => pushConnState()).catch(() => {});
   } catch (e) { console.error('connection init failed:', String((e && e.message) || e)); }
+  createWindow();
+  ensureTray();
+  scheduleUpdateCheck(); // Batch 9: daily GitHub Release probe, silent unless newer
   // Global hotkey: snap the crosshair back to the primary-screen center.
   // Recenter is a Position (Pro) feature — Free presses get a notice toast
   // in the main window instead of moving anything.
@@ -395,31 +493,47 @@ app.whenReady().then(() => {
       } catch (e) { /* ignore */ }
     });
   } catch (e) { console.error('hotkey register failed:', String((e && e.message) || e)); }
+  // Global toggle: Ctrl+Shift+X flips the overlay on/off without opening the app.
+  // Toggling on/off is Free (layers/sizes stay Pro-gated in crosshair:set).
+  try {
+    globalShortcut.register(TOGGLE_HOTKEY, () => {
+      try {
+        crosshair.ensureWindow();
+        const r = crosshair.toggle();
+        updateTrayState();
+        if (r && r.config && win && !win.isDestroyed()) {
+          try { win.webContents.send('crosshair:update', r.config); } catch { /* overlay already got it */ }
+        }
+      } catch (e) { /* ignore */ }
+    });
+  } catch (e) { console.error('toggle hotkey register failed:', String((e && e.message) || e)); }
   app.on('activate', () => {
-    if (!win || win.isDestroyed()) createWindow();
+    showMain();
   });
 });
 app.on('second-instance', () => {
-  if (win) {
-    if (win.isMinimized()) win.restore();
-    win.focus();
-  }
+  showMain();
 });
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // Stay alive for tray + independent crosshair overlay. Quit only via tray.
+  if (process.platform === 'darwin') return;
 });
-// The 0.5ms timer holder (cpu-timer-res) only lives while the app runs —
-// kill strays synchronously on quit so no invisible behavior change lingers.
+// The 0.5ms timer holder (cpu-timer-res) only lives while the app runs.
+// Async fire-and-forget on quit: never block the quit path (was spawnSync).
 app.on('before-quit', () => {
+  isQuitting = true;
   try { globalShortcut.unregisterAll(); } catch { /* ignore */ }
   try { crosshair.destroy(); } catch { /* ignore */ }
+  try { if (tray) tray.destroy(); } catch { /* ignore */ }
   try {
-    require('node:child_process').spawnSync(
+    const { spawn } = require('node:child_process');
+    const child = spawn(
       'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command',
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-Command',
         `Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*TidalTweaks-TimerRes*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`],
-      { windowsHide: true, timeout: 15000 }
+      { windowsHide: true }
     );
+    if (child && child.unref) child.unref();
   } catch { /* best effort — OS reclaims on reboot regardless */ }
 });
 
@@ -742,6 +856,17 @@ ipcMain.handle('preset:apply', async (_e, { id }) => {
   }
 });
 
+/* Revert a whole preset stack (Batch 5): replays the single 'preset:'+id undo
+ * entry. No tier gate — anyone who could apply it can undo it (never strand a
+ * Free user). AppX removals inside report as manual-action like factory-reset. */
+ipcMain.handle('preset:revert', async (_e, { id } = {}) => {
+  try {
+    return await backup.revertOne('preset:' + String(id || ''));
+  } catch (err) {
+    return { ok: false, message: String((err && err.message) || err) };
+  }
+});
+
 /* Boost the saved game list to High (Free — Gaming tab priority card). */
 ipcMain.handle('game:boost-list', (_e, { names }) => gamingTweaks.boostSavedGames(names || []));
 
@@ -841,8 +966,82 @@ ipcMain.handle('license:status', () => {
     username: (me && me.username) || null,
     displayName: (me && (me.displayName || me.username)) || null,
     role: (me && me.role) || null,
+    version: APP_VERSION_EARLY,
+    perf: !!store.get('perfMode'), // Batch 8 Performance Mode (Issue 4)
   };
 });
+ipcMain.handle('app:version', () => ({ ok: true, version: APP_VERSION_EARLY }));
+
+/* ==========================================================================
+ * Auto-update check (Batch 9): no new deps, no background installer.
+ * Compares package.json version against the latest GitHub Release tag on the
+ * user's repo; on a newer tag the renderer toasts + the Settings About card
+ * offers a one-click download page button. Silent install is deliberately
+ * NOT included (needs signing + electron-updater). Checked at most once per
+ * 24h automatically + on manual button press.
+ * ========================================================================== */
+const UPDATE_REPO = 'exoticccccccc/TidalTweaks';
+function cmpVersions(a, b) {
+  const pa = String(a || '').replace(/^v/i, '').split('.').map((x) => parseInt(x, 10) || 0);
+  const pb = String(b || '').replace(/^v/i, '').split('.').map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+function fetchLatestRelease() {
+  return new Promise((resolve) => {
+    try {
+      const https = require('node:https');
+      const req = https.get({
+        hostname: 'api.github.com',
+        path: `/repos/${UPDATE_REPO}/releases/latest`,
+        headers: { 'User-Agent': 'TidalTweaks', Accept: 'application/vnd.github+json' },
+        timeout: 15000,
+      }, (res) => {
+        let body = '';
+        res.on('data', (c) => { body += c; if (body.length > 256 * 1024) { try { req.destroy(); } catch {} } });
+        res.on('end', () => {
+          try {
+            if (res.statusCode !== 200) return resolve({ ok: false, status: res.statusCode });
+            const j = JSON.parse(body);
+            resolve({ ok: true, tag: String(j.tag_name || ''), url: String(j.html_url || `https://github.com/${UPDATE_REPO}/releases/latest`) });
+          } catch (e) { resolve({ ok: false }); }
+        });
+      });
+      req.on('timeout', () => { try { req.destroy(); } catch {} resolve({ ok: false, timeout: true }); });
+      req.on('error', () => resolve({ ok: false, offline: true }));
+    } catch { resolve({ ok: false }); }
+  });
+}
+async function checkForUpdates(isManual) {
+  try {
+    if (!isManual) {
+      const last = Number(store.get('updateLastCheck') || 0);
+      if (Date.now() - last < 24 * 3600 * 1000) return { ok: false, cached: true };
+    }
+    const r = await fetchLatestRelease();
+    store.set('updateLastCheck', Date.now());
+    if (!r.ok) return { ok: false, message: 'Could not reach GitHub — check your connection.' };
+    const avail = cmpVersions(r.tag, APP_VERSION_EARLY) > 0;
+    return { ok: true, updateAvailable: avail, current: APP_VERSION_EARLY, latest: r.tag.replace(/^v/i, ''), url: r.url };
+  } catch (err) {
+    return { ok: false, message: String((err && err.message) || err) };
+  }
+}
+ipcMain.handle('app:check-update', async () => checkForUpdates(true));
+// Deferred auto-check: 30s after boot, at most daily. Result pushed to UI.
+function scheduleUpdateCheck() {
+  setTimeout(async () => {
+    try {
+      const r = await checkForUpdates(false);
+      if (r && r.ok && r.updateAvailable && win && !win.isDestroyed()) {
+        try { win.webContents.send('app:update-available', r); } catch { /* ignore */ }
+      }
+    } catch { /* never crash boot for an update probe */ }
+  }, 30000);
+}
 
 ipcMain.handle('license:set-lite', (_e, { value } = {}) => {
   // 'auto' | 'on' | 'off'. GPU-compositing change needs a restart to bite;
@@ -856,12 +1055,13 @@ ipcMain.handle('license:set-lite', (_e, { value } = {}) => {
 
 /* Appearance settings (Settings → Appearance). Device-level like liteMode —
  * themes are a display preference, not per-account data. */
-const THEMES = ['tsunami', 'abyss', 'royal', 'emerald', 'crimson', 'sunset', 'arctic', 'mono', 'inferno', 'candy', 'toxic'];
+const THEMES = ['tsunami', 'abyss', 'royal', 'emerald', 'crimson', 'sunset', 'arctic', 'mono', 'inferno', 'candy', 'toxic', 'oled', 'pulse'];
 const ACCENTS = ['blue', 'gold', 'violet', 'mint', 'rose', 'cyan', 'orange', 'silver'];
 ipcMain.handle('settings:get', () => ({
   ok: true,
   theme: THEMES.includes(store.get('theme')) ? store.get('theme') : 'tsunami',
   accent: ACCENTS.includes(store.get('accent')) ? store.get('accent') : 'blue',
+  perfMode: !!store.get('perfMode'),
   priorityGames: Array.isArray(store.get('priorityGames')) ? store.get('priorityGames') : [],
   // Last used crosshair design (Crosshair tab). Sanitized in core/crosshair.js.
   crosshair: crosshair.getConfig(),
@@ -889,7 +1089,11 @@ ipcMain.handle('settings:set', (_e, patch = {}) => {
   if (patch.crosshair !== undefined) {
     try { crosshair.setConfig(patch.crosshair || {}); } catch { /* ignore */ }
   }
-  return { ok: true, theme: store.get('theme'), accent: store.get('accent'), priorityGames: store.get('priorityGames') || [], crosshair: crosshair.getConfig() };
+  // Batch 8 Performance Mode (Issue 4): persists via electron-store.
+  if (patch.perfMode !== undefined) {
+    store.set('perfMode', !!patch.perfMode);
+  }
+  return { ok: true, theme: store.get('theme'), accent: store.get('accent'), perfMode: !!store.get('perfMode'), priorityGames: store.get('priorityGames') || [], crosshair: crosshair.getConfig() };
 });
 
 /* ==========================================================================
@@ -932,9 +1136,13 @@ ipcMain.handle('crosshair:set', (_e, patch = {}) => {
         l0.color = String(p.color);
       }
       if (p.shape !== undefined || p.color !== undefined) allowed.layers = [l0, ...cur.layers.slice(1)];
-      return crosshair.setConfig(allowed);
+      const r = crosshair.setConfig(allowed);
+      try { updateTrayState(); } catch { /* ignore */ }
+      return r;
     }
-    return crosshair.setConfig(p);
+    const r2 = crosshair.setConfig(p);
+    try { updateTrayState(); } catch { /* ignore */ }
+    return r2;
   } catch (err) {
     return { ok: false, message: String((err && err.message) || err) };
   }
@@ -942,7 +1150,9 @@ ipcMain.handle('crosshair:set', (_e, patch = {}) => {
 ipcMain.handle('crosshair:toggle', (_e, { enabled } = {}) => {
   try {
     crosshair.ensureWindow();
-    return crosshair.toggle(enabled);
+    const r = crosshair.toggle(enabled);
+    try { updateTrayState(); } catch { /* ignore */ }
+    return r;
   } catch (err) {
     return { ok: false, message: String((err && err.message) || err) };
   }
@@ -1108,8 +1318,7 @@ ipcMain.handle('services:list', () => {
  * before/after comparisons show what was active. GPU numbers are measured
  * in the renderer (WebGL) and sent in with the save payload.
  * ========================================================================== */
-let APP_VERSION = '2.4.3';
-try { APP_VERSION = require('./package.json').version || APP_VERSION; } catch { /* ignore */ }
+let APP_VERSION = APP_VERSION_EARLY;
 ipcMain.handle('bench:run-test', async (_e, { test, durationMs } = {}) => {
   const t = String(test || '');
   if (!['cpu', 'ram', 'disk'].includes(t)) return { ok: false, message: 'Unknown benchmark.' };

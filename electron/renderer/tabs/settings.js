@@ -138,6 +138,24 @@
       TT.toast('Saved. Restart the app for the full effect.', 'success');
     } else TT.toast('Failed: ' + ((r && r.message) || 'unknown'), 'error');
   };
+  // Batch 8 Performance Mode (Issue 4): persists via electron-store, applies instantly.
+  const perfBox = $('perf-mode');
+  if (perfBox) perfBox.onchange = async () => {
+    const r = await TT.api.settings.set({ perfMode: !!perfBox.checked }).catch((e) => ({ ok: false }));
+    if (r && r.ok) {
+      await TT.refreshLicense(false); // applies body.perf instantly (see app.js)
+      TT.toast(perfBox.checked ? 'Performance Mode ON — polling slowed, animations off.' : 'Performance Mode OFF — full effects back.', 'success');
+    } else {
+      TT.toast('Could not save Performance Mode.', 'error');
+      try { perfBox.checked = !perfBox.checked; } catch { /* ignore */ }
+    }
+  };
+  async function paintPerf() {
+    try {
+      const g = await TT.api.settings.get();
+      if (g && g.ok && perfBox) perfBox.checked = !!g.perfMode;
+    } catch { /* defaults stand */ }
+  }
   $('settings-revert-all').onclick = async () => {
     const ok = await TT.confirm({
       title: 'Revert ALL changes?',
@@ -183,7 +201,7 @@
   }
   // Each theme ships a native accent; picking a theme re-pairs it, picking
   // an accent keeps your explicit choice.
-  const NATIVE_ACCENT = { tsunami: 'blue', abyss: 'blue', royal: 'violet', emerald: 'mint', crimson: 'rose', sunset: 'orange', arctic: 'blue', mono: 'silver', inferno: 'orange', candy: 'rose', toxic: 'mint' };
+  const NATIVE_ACCENT = { tsunami: 'blue', abyss: 'blue', royal: 'violet', emerald: 'mint', crimson: 'rose', sunset: 'orange', arctic: 'blue', mono: 'silver', inferno: 'orange', candy: 'rose', toxic: 'mint', oled: 'cyan', pulse: 'violet' };
   async function pushAppearance(fromTheme) {
     const theme = themeSel.value;
     const accent = fromTheme ? (NATIVE_ACCENT[theme] || 'blue') : accentSel.value;
@@ -236,8 +254,41 @@
     };
   });
 
-  TT._show.settings = () => { paint(); paintAppearance(); paintConn(); };
-  paint();
-  paintAppearance();
-  paintConn();
+  // — Updates (Batch 9): GitHub Release probe, no new deps. Auto-check runs
+  // 30s after boot (daily); this button forces it. Newer release → toast with
+  // version + status line; download happens on GitHub (no silent installer).
+  function paintUpdate(info, checking) {
+    const st = $('update-status');
+    if (!st) return;
+    if (checking) { st.textContent = 'Checking GitHub for a newer release…'; return; }
+    if (!info) return;
+    if (info.ok && info.updateAvailable) {
+      st.textContent = `⬆ v${info.latest} is out (you have v${info.current}). Get it from GitHub Releases — no manual re-download hunt.`;
+    } else if (info && info.ok) {
+      st.textContent = `You're on the latest (v${info.current}).`;
+    } else {
+      st.textContent = (info && info.message) || 'Update check needs internet.';
+    }
+  }
+  const updBtn = $('update-check');
+  if (updBtn) updBtn.onclick = async () => {
+    paintUpdate(null, true);
+    let r = null;
+    try { r = await TT.api.app.checkUpdate(); } catch (e) { r = { ok: false }; }
+    paintUpdate(r, false);
+    if (r && r.ok && r.updateAvailable) TT.toast(`⬆ v${r.latest} available — see Settings → About.`, 'gold', 5000);
+    else if (r && r.ok) TT.toast('Already up to date. ✅', 'success');
+    else TT.toast('Update check needs internet.', 'error', 4000);
+  };
+  try {
+    if (TT.api.app.onUpdateAvailable) {
+      TT.api.app.onUpdateAvailable((info) => {
+        paintUpdate(info, false);
+        if (info && info.latest) TT.toast(`⬆ v${info.latest} is out — see Settings → About.`, 'gold', 6000);
+      });
+    }
+  } catch (e) { /* subscription is best-effort */ }
+
+  // Batch 7: lazy — no IPC until Settings is first opened.
+  TT._show.settings = () => { paint(); paintAppearance(); paintConn(); paintPerf(); };
 })();

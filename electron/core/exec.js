@@ -14,7 +14,13 @@
  * ========================================================================== */
 const { execFile } = require('node:child_process');
 
-/** Run any executable, never throw. → { code, stdout, stderr } */
+/* SILENT-EXEC POLICY (Batch 3, Issue 2): every child process MUST be invisible.
+ *   • execFile always gets `windowsHide: true` (no conhost/cmd window ever).
+ *   • powershell.exe always gets `-WindowStyle Hidden` (defense in depth for
+ *     slow console-host init where windowsHide alone can still flash).
+ *   • No caller may spawn its own shell — route through runCmd/runPS only.
+ * Progress + results are reported via IPC return values for the app's own UI;
+ * nothing ever prints to an external terminal. */
 function runCmd(file, args, timeoutMs) {
   return new Promise((resolve) => {
     execFile(
@@ -32,11 +38,11 @@ function runCmd(file, args, timeoutMs) {
   });
 }
 
-/** Run a PowerShell snippet. → { code, stdout, stderr } */
+/** Run a PowerShell snippet, silently. → { code, stdout, stderr } */
 function runPS(script, timeoutMs) {
   return runCmd(
     'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script],
+    ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', '-Command', script],
     timeoutMs || 120000
   );
 }

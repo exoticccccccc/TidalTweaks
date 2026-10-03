@@ -273,9 +273,6 @@
     'svc-fax-off': { os: 'both', t: 'Disable Fax service', d: 'It is not 2004 anymore.', m: 'Will stop + disable the Fax service.' },
     'svc-insider-off': { os: 'both', t: 'Disable Insider service', d: 'No preview builds, no wisvc background work.', m: 'Will stop + disable wisvc.' },
     'svc-touchkbd-off': { os: 'both', t: 'Disable Touch Keyboard service', d: 'Only if you have NO touchscreen — else your keyboard vanishes.', m: '⚠ Will stop + disable TabletInputService.\nTouchscreen/pen users: SKIP THIS. Absent on most desktops (then it reports "nothing to do").' },
-    'adv-no-search-highlights': { free: true, os: 'both', t: 'Search highlights off', d: 'Kills the ad-like rotating panel in Start search.', m: 'Will set IsDynamicSearchBoxEnabled=0.' },
-    'adv-no-error-report': { os: 'both', t: 'Error Reporting off', d: 'No more "looking for a solution" hangs after crashes.', m: 'Will set Disabled=1 under Windows Error Reporting.\nCrash logs stop being sent to Microsoft.' },
-    'adv-no-driver-updates': { os: 'both', t: 'Block driver updates via WU', d: 'Stops Windows Update overwriting your GPU drivers. The classic rage-source.', m: 'Will set ExcludeWUDriversInQualityUpdate=1.\nSecurity + feature updates keep flowing; update GPU drivers manually.' },
     // ————— Optional services (Risxn-style kills, but reversible) —————
     'svc-xbox-off': { t: 'Disable Xbox services', d: 'XblAuthManager, XblGameSave, XboxGipSvc, XboxNetApiSvc → disabled.', m: 'Will stop and disable the four Xbox services.\nXbox app sign-in and Game Bar companions stop working. Reversible.' },
     'svc-printer-off': { t: 'Disable Print Spooler', d: 'Spooler → disabled. For PCs that never print.', m: 'Will stop and disable the Print Spooler.\nYou will NOT be able to print until re-enabled.' },
@@ -455,11 +452,75 @@
    * FREE-tagged tweaks stay usable. Apply ALWAYS confirms first.
    * Groups re-render automatically when the license flips (see refreshLicense),
    * so unlocking instantly swaps every 🔒 for a live button. */
+  /* Batch 6 (Issue 6): category blurbs — what the group does, who it's for,
+   * warnings. Injected once per tweak-list container via its data-tweaks key. */
+  const GROUP_BLURBS = {
+    'cpu': 'Raw CPU + power delivery: boost, parking, timers. For gamers/chasers with cooling headroom — watch thermals on laptops.',
+    'system': 'Safe boot + behavior flags (verbose boot, BSOD detail, fast shutdown). Free, for everyone — easiest wins first.',
+    'disk': 'NTFS/filesystem tuning (last-access, 8.3 names). Pro, admins only — ancient installers can dislike 8.3 off.',
+    'visual-free': 'Safe look-and-feel wins (menus, extensions, taskbar). Free, for everyone — instant and reversible.',
+    'visual': 'Deeper visual surgery (peek, blur, transparency). Pro — weak iGPUs gain most; frosted look goes flat.',
+    'advanced-free': 'Everyday declutter (tips, Copilot, widgets, feed). Free, for everyone — quieter Windows, zero risk.',
+    'advanced': 'Background services + update behavior (indexing, SysMain, delivery). Pro — SSDs benefit most; HDDs keep SysMain.',
+    'gaming-free': 'Free starter latency wins (Game Bar, FSO, Game Mode). For every gamer — apply first, no reboot.',
+    'gaming': 'Pro latency pipeline (HAGS, Nagle, throttling, input). For competitive players — HAGS needs reboot + admin.',
+    'gpu-vendor': 'Vendor GPU fixes (NVIDIA telemetry, MSI mode, AMD ULPS, MPO). Pro — apply only your vendor; MSI needs reboot.',
+    'net-dns': 'DNS + adapter power (resolvers, NIC sleep). Mixed tiers — brief 1-2s blip when DNS changes.',
+    'net-latency': 'TCP/stack latency (ports, ACKs, autotune). Pro mostly — twitch games gain; VPN users go careful.',
+    'net-more': 'Repairs + toggles (stack reset, ECN, tunnels, adapter bounce). Pro — stack reset needs reboot + VPN re-setup.',
+    'debloat': 'One-click removals (OneDrive, Edge, AppX, FX). Check warnings — AppX removals need Store reinstall.',
+    'services': 'Optional service kills (Xbox, print, BT, background). Pro — skip anything your hardware/setup needs.',
+    'privacy': 'Tracker lockdown (telemetry, ad ID, hosts block, hardening). Pro — maps/calls/location break as labelled.',
+    'power': 'Power plans + sleep/cooling (Ultimate, S3, lid, fans). Mixed — laptops: cooling policy before max plans.',
+    'adv-memory': 'Memory + kernel (compression, cache, prefetch, paging). Pro — needs RAM headroom; most need reboot.',
+    'adv-gpu': 'GPU + scheduling depth (HAGS-class, timers). Pro/Extreme — benchmark before/after; reboot to settle.',
+  };
+  /* Who-is-it-for, derived from tier (no per-tweak manual upkeep). */
+  function whoFor(id) {
+    const t = tierOf(id);
+    if (t === 0) return 'Everyone (Free)';
+    if (t === 1) return 'Everyday users (Base)';
+    if (t === 3) return 'Advanced users only (Extreme — know your recovery)';
+    return 'Gamers / power users (Pro)';
+  }
+  function rebootNeeded(id) { return REBOOT_IDS.has(id); }
+  /* Reversible? Everything logs a revert via backup.js except AppX/Edge/OneDrive
+   * removals + one-shot repairs (kind:none) which need manual action. */
+  const MANUAL_REVERT_IDS = new Set(['debloat-cortana-app', 'debloat-xbox-app', 'debloat-onedrive', 'debloat-edge', 'net-reset-stack', 'net-adapter-restart', 'net-flush-dns', 'debloat-disk-cleanup']);
+  function reversibleNote(id) {
+    if (MANUAL_REVERT_IDS.has(id)) return 'Partially — undo restores settings, but removed apps need Store reinstall / repairs need manual re-setup';
+    return 'Yes — Restore → Revert (per tweak) or Undo last';
+  }
+  /* Info modal: reuses the confirm shell with OK-only ("Got it"). */
+  function showInfo(id) {
+    const meta = TWEAKS[id] || { t: id, d: '', m: '' };
+    const warnLines = String(meta.m || '').split('\n').filter((l) => /⚠|WARNING|REQUIRES|REBOOT|reboot|admin|ADMIN/i.test(l));
+    const body =
+      (meta.d ? meta.d + '\n\n' : '') +
+      (meta.m ? 'What it changes:\n' + meta.m + '\n\n' : '') +
+      `Who it's for: ${whoFor(id)}\n` +
+      `Requires restart: ${rebootNeeded(id) ? 'YES — reboot to take effect' : 'No'}\n` +
+      `Reversible: ${reversibleNote(id)}\n` +
+      (warnLines.length ? `\nWarnings:\n${warnLines.join('\n')}` : '');
+    return confirmAction({ title: `ⓘ ${meta.t}`, body, okText: 'Got it' }).then(() => true);
+  }
   const tweakRenders = []; // { container, ids } — replayed on license change
   function renderTweaks(container, ids, skipRegister) {
     if (!container) return;
     if (!skipRegister) tweakRenders.push({ container, ids });
     container.innerHTML = '';
+    // Category blurb (Issue 6.3): one line per group, cheapest possible DOM.
+    try {
+      const key = container.dataset && container.dataset.tweaks;
+      const blurb = key && GROUP_BLURBS[key];
+      if (blurb) {
+        const p = document.createElement('p');
+        p.className = 'dim';
+        p.style.margin = '0 0 10px';
+        p.textContent = blurb;
+        container.appendChild(p);
+      }
+    } catch { /* blurb is cosmetic */ }
     for (const id of ids) {
       const meta = TWEAKS[id];
       if (!meta) continue;
@@ -468,6 +529,10 @@
       const card = document.createElement('div');
       card.className = 'tweak-card';
       card.dataset.tweak = id;
+      // Hover tooltip (Issue 6.1): what + tradeoff + reboot + reversible.
+      try {
+        card.title = `${meta.t}\n${meta.d || ''}\nRestart: ${rebootNeeded(id) ? 'required' : 'not required'} · Reversible: ${MANUAL_REVERT_IDS.has(id) ? 'partially (see ⓘ)' : 'yes'}`;
+      } catch { /* ignore */ }
       const info = document.createElement('div');
       info.className = 'tweak-info';
       const b = document.createElement('b');
@@ -529,6 +594,15 @@
         revertBtn.onclick = () => revertTweak(id, card);
         actions.appendChild(revertBtn);
       }
+      // ⓘ info button (Issue 6.2): full description + keys + who-for +
+      // warnings + manual revert. Always visible, even on locked cards.
+      const infoBtn = document.createElement('button');
+      infoBtn.className = 'btn secondary';
+      infoBtn.textContent = 'ⓘ';
+      infoBtn.title = 'What does this do? (full details, warnings, manual revert)';
+      infoBtn.setAttribute('aria-label', `Details for ${meta.t}`);
+      infoBtn.onclick = () => showInfo(id);
+      actions.appendChild(infoBtn);
       card.append(info, actions);
       container.appendChild(card);
     }
@@ -576,6 +650,9 @@
       document.body.classList.toggle('is-pro', licenseState.tier >= 2);
       // Lite mode: flat panels + no GPU compositing (see styles.css body.lite).
       document.body.classList.toggle('lite', !!s.lite);
+      // Batch 8 Performance Mode: 5s polling + killed animations (body.perf).
+      document.body.classList.toggle('perf', !!s.perf);
+      try { licenseState.perf = !!s.perf; } catch { /* ignore */ }
       // Personal greeting (the Risxn "Welcome, User!" touch — we have accounts).
       const dashTitle = $('#dash-title');
       if (dashTitle) dashTitle.textContent = s.username ? `Welcome, ${s.displayName || s.username}!` : 'Dashboard';
@@ -583,6 +660,13 @@
       // owner IPC call, so hiding here is UX, not security).
       const ownerBtn = $('#nav-owner');
       if (ownerBtn) ownerBtn.hidden = s.role !== 'owner';
+      // Single version source (Batch 2 F-14): main sends package.json version.
+      try {
+        const foot = $('#side-foot');
+        if (foot && s.version) foot.textContent = 'v' + s.version + ' · Win 10/11';
+        const about = $('#about-line');
+        if (about && s.version) about.textContent = `TidalTweaks v${s.version} · Electron · Windows 10/11 · No accounts, no telemetry, no payment processors.`;
+      } catch { /* ignore */ }
       // License UPGRADED? Re-render every tweak group so 🔒 buttons swap
       // live without a restart + fire the unlock celebration.
       if (licenseState.tier !== wasTier) {
@@ -663,7 +747,9 @@
   }
 
   /* ------------------------------ router --------------------------------- */
-  const order = ['dashboard', 'cleaner', 'startup', 'ram', 'network', 'presets', 'library', 'tips', 'benchmark', 'profiles', 'gaming',
+  // Batch 5: 'profiles' tab removed per user request (backend IPC kept dormant
+  // for old undo entries; UI nav + page + script gone).
+  const order = ['dashboard', 'cleaner', 'startup', 'ram', 'network', 'presets', 'library', 'tips', 'benchmark', 'gaming',
     'registry', 'debloat', 'privacy', 'power', 'crosshair', 'potato', 'bios', 'advanced', 'services', 'restore', 'settings', 'owner'];
   let current = 'dashboard';
 
@@ -879,9 +965,10 @@
     toast, confirm: confirmAction, confetti: confettiBurst,
     fmtBytes, fmtUptime, countUp, TWEAKS, TIER_NAMES, TIER_PRICES,
     tierOf, tierStats, progress,
-    renderTweaks, applyTweak, revertTweak,
+    renderTweaks, applyTweak, revertTweak, showInfo,
     refreshLicense, switchTab,
     get pro() { return licenseState.tier >= 2; }, // legacy: "pro content" gate
+    get perf() { return !!(licenseState.perf || (typeof document !== 'undefined' && document.body.classList.contains('perf'))); },
     get tier() { return licenseState.tier || 0; },
     get tierName() { return TIER_NAMES[licenseState.tier] || 'Free'; },
     get api() { return api; },

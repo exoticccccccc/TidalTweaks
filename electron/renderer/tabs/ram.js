@@ -19,8 +19,15 @@
     } catch (e) { /* next poll retries */ }
   }
 
+  // Batch 3 (Issue 2): the trim runs silently via hidden PowerShell
+  // (windowsHide + -WindowStyle Hidden). UI shows status text only.
+  let busy = false;
   async function optimize() {
-    $('ram-status').textContent = 'Trimming idle working sets…';
+    if (busy) return;
+    busy = true;
+    const goBtn = $('ram-go');
+    goBtn.disabled = true;
+    $('ram-status').textContent = 'Trimming idle working sets… (silent, no terminal)';
     let before = null;
     try {
       const s = await TT.api.sys.live();
@@ -28,10 +35,12 @@
     } catch (e) { /* non-fatal */ }
     let res;
     try { res = await TT.api.ram.optimize(); }
-    catch (e) { res = { ok: false, message: String(e) }; }
+    catch (e) { res = { ok: false }; }
+    goBtn.disabled = false;
+    busy = false;
     if (!res || !res.ok) {
       $('ram-status').textContent = '';
-      TT.toast('RAM optimize failed: ' + ((res && res.message) || 'unknown'), 'error', 5000);
+      TT.toast('RAM trim hit a snag — try again. Nothing was closed.', 'error', 5000);
       return;
     }
     // Before bar → short beat → after bar, so the drop is VISIBLE.
@@ -60,6 +69,6 @@
     TT.toast((r && r.message) || 'Failed.', r && r.ok ? 'success' : 'error', 5000);
     if (r && r.ok && TT.refreshRestore) TT.refreshRestore();
   };
+  // Batch 7: lazy — poll only when the RAM tab is first shown (no boot IPC).
   TT._show.ram = poll;
-  poll();
 })();

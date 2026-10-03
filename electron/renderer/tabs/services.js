@@ -190,6 +190,6 @@
     }
     await refresh();
   };
+  // Batch 7: lazy — list loads on first open via _show, not at boot.
   wire();
-  refresh();
 })();
