@@ -4,6 +4,40 @@ All notable changes, newest first. Version numbers match GitHub Releases
 (`TidalTweaks Setup X.Y.Z.exe`). Same-day releases happen when a fix can't
 wait — a higher number is always the one to download.
 
+## v3.0.0 — OLED remodel + silent everything
+
+**UI remodel (fullscreen monochrome):**
+- App opens maximized and remembers its window size; titlebar is now
+  minimize + close only (floating, thin icons, draggable region).
+- Default theme is OLED black & white — pure `#000` backgrounds, flat pills,
+  zero glow, zero gradients on chrome. All 12 other themes restyled to the
+  same spacing scale with their hues intact. New Mono White accent.
+- Generous spacing everywhere (8px scale, 1200px content, 56px tweak rows,
+  36px buttons, 32px titles) and transform/opacity-only motion with
+  `prefers-reduced-motion` support.
+- Tier badges redesigned flat and minimal (BASE outline / PRO solid /
+  EXTREME solid, uppercase pills, no crowns, no glow) and every emoji
+  removed from the interface.
+- Profiles tab removed (backend kept dormant for old undo entries).
+
+**Fixes & behavior (all prior batches, first released here):**
+- Cleaner, RAM trim, janitor and timer holder run fully silent
+  (`windowsHide` + hidden PowerShell) with in-app progress and result panels.
+- Crosshair overlay is independent (survives main-window close), with
+  Ctrl+Shift+X toggle and a tray menu (Toggle / Open / Quit).
+- Startup deferred (window paints first, heavy work after) with tray boot;
+  quit path no longer blocks; duplicate tweak keys and version drift fixed.
+- 9 focused preset stacks replace the old 15 (Max FPS, Low Latency,
+  Competitive, Responsiveness, Privacy Max, Debloat Safe/Aggressive, Battery,
+  Focus) — each with count preview, one-click revert and toasts.
+- Hover tooltips + info modal on every tweak; category blurbs per group.
+- Tabs lazy-load on first open; Services renders in one pass with debounced
+  search; dead background watchdog removed; main process is poll-free.
+- Performance Mode toggle (5s polling, no animations, persists) now
+  applies instantly; dashboard re-arms live.
+- New app logo (icon.png/ico); in-app update checker against GitHub
+  Releases with a Settings → About button (no silent installer by design).
+
 ## v2.4.4
 
 - **Benchmark tab (free)**: CPU single/multi (prime sieve + worker-thread
