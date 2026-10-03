@@ -311,7 +311,7 @@ let tray = null;
 let isQuitting = false;
 const TOGGLE_HOTKEY = 'CommandOrControl+Shift+X';
 
-let APP_VERSION_EARLY = '2.4.4';
+let APP_VERSION_EARLY = '3.0.0';
 try { APP_VERSION_EARLY = require('./package.json').version || APP_VERSION_EARLY; } catch { /* ignore */ }
 
 // Single instance: focus the existing window instead of opening a second copy.
