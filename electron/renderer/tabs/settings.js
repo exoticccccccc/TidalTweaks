@@ -13,10 +13,10 @@
     const tier = (s && typeof s.tier === 'number') ? s.tier : 0;
     const tname = (TT.TIER_NAMES[tier] || 'Free').toUpperCase();
     $('license-status').textContent = tier > 0
-      ? `👑 ${tname} ACTIVE since ${(s.activatedAt || '').slice(0, 10)} — ${tier >= 3 ? 'everything' : 'all ' + tname + ' and below'} unlocked.`
+      ? `${tname} ACTIVE since ${(s.activatedAt || '').slice(0, 10)} — ${tier >= 3 ? 'everything' : 'all ' + tname + ' and below'} unlocked.`
       : 'FREE version — pick a tier below to unlock more tweaks.';
     $('account-line').textContent = s.username
-      ? `Signed in as ${s.displayName || s.username} (${s.role}) · ${tname}${tier >= 2 ? ' 👑' : ''}.`
+      ? `Signed in as ${s.displayName || s.username} (${s.role}) · ${tname}.`
       : 'Not signed in.';
     // Referral + affiliate snapshot (local tracking until the website flow lands).
     try {
@@ -121,7 +121,7 @@
   $('license-check').onclick = async () => {
     await TT.refreshLicense(false);
     paint();
-    TT.toast(TT.tier > 0 ? `${TT.tierName} is active. 👑` : 'Free version — no active license.', TT.tier > 0 ? 'gold' : '', 3000);
+    TT.toast(TT.tier > 0 ? `${TT.tierName} is active.` : 'Free version — no active license.', '', 3000);
   };
   $('license-deactivate').onclick = async () => {
     await TT.api.license.deactivate().catch(() => {});
@@ -144,6 +144,7 @@
     const r = await TT.api.settings.set({ perfMode: !!perfBox.checked }).catch((e) => ({ ok: false }));
     if (r && r.ok) {
       await TT.refreshLicense(false); // applies body.perf instantly (see app.js)
+      try { window.dispatchEvent(new Event('tt:perf')); } catch { /* ignore */ }
       TT.toast(perfBox.checked ? 'Performance Mode ON — polling slowed, animations off.' : 'Performance Mode OFF — full effects back.', 'success');
     } else {
       TT.toast('Could not save Performance Mode.', 'error');
@@ -201,7 +202,7 @@
   }
   // Each theme ships a native accent; picking a theme re-pairs it, picking
   // an accent keeps your explicit choice.
-  const NATIVE_ACCENT = { tsunami: 'blue', abyss: 'blue', royal: 'violet', emerald: 'mint', crimson: 'rose', sunset: 'orange', arctic: 'blue', mono: 'silver', inferno: 'orange', candy: 'rose', toxic: 'mint', oled: 'cyan', pulse: 'violet' };
+  const NATIVE_ACCENT = { tsunami: 'blue', abyss: 'blue', royal: 'violet', emerald: 'mint', crimson: 'rose', sunset: 'orange', arctic: 'blue', mono: 'silver', inferno: 'orange', candy: 'rose', toxic: 'mint', oled: 'white', pulse: 'violet' };
   async function pushAppearance(fromTheme) {
     const theme = themeSel.value;
     const accent = fromTheme ? (NATIVE_ACCENT[theme] || 'blue') : accentSel.value;
@@ -277,7 +278,7 @@
     try { r = await TT.api.app.checkUpdate(); } catch (e) { r = { ok: false }; }
     paintUpdate(r, false);
     if (r && r.ok && r.updateAvailable) TT.toast(`⬆ v${r.latest} available — see Settings → About.`, 'gold', 5000);
-    else if (r && r.ok) TT.toast('Already up to date. ✅', 'success');
+    else if (r && r.ok) TT.toast('Already up to date.', 'success');
     else TT.toast('Update check needs internet.', 'error', 4000);
   };
   try {

@@ -48,7 +48,6 @@
      (see core/users.js). First registered account becomes owner. -->
 <div id="auth-root" hidden>
   <div class="auth-card glass">
-    <div class="auth-logo">🌊</div>
     <h2>Tidal<em>Tweaks</em></h2>
     <p class="dim">Sign in on this PC to continue.</p>
     <div class="auth-tabs">
@@ -76,8 +75,8 @@
 </div>
 
 <!-- ======================= Custom titlebar (frameless window) =======================
-     -webkit-app-region: drag makes it act like a native title bar.
-     Buttons are no-drag so they stay clickable. Double-click toggles maximise. -->
+     Remodel: floating minimize + close only (no maximize). The whole bar is a
+     drag region (-webkit-app-region: drag); buttons opt out (no-drag). -->
 <header id="titlebar">
   <div class="tb-left">
     <button id="btn-nav" class="tb-btn" title="Menu" aria-label="Toggle sidebar">
@@ -92,14 +91,10 @@
   </div>
   <div class="tb-controls">
     <button id="btn-min" class="tb-btn" title="Minimize" aria-label="Minimize">
-      <svg viewBox="0 0 12 12"><path d="M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </button>
-    <button id="btn-max" class="tb-btn" title="Maximize" aria-label="Maximize">
-      <svg viewBox="0 0 12 12" id="glyph-max"><rect x="2" y="2" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-      <svg viewBox="0 0 12 12" id="glyph-restore" hidden><path d="M4 1h7v7M8 3H1v8h7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      <svg viewBox="0 0 14 14"><path d="M1.5 7h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
     <button id="btn-close" class="tb-btn danger" title="Close" aria-label="Close">
-      <svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 14 14"><path d="M2.5 2.5l9 9M11.5 2.5l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
   </div>
 </header>
@@ -150,23 +145,23 @@
       <div class="nav-sep"><span>PRO</span></div>
       <button class="nav-item" data-tab="gaming" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01M17.3 5H6.7a4 4 0 00-3.9 3.1L1.5 13a3 3 0 005.2 2.9L9 13h6l2.3 2.9a3 3 0 005.2-2.9l-1.3-4.9A4 4 0 0017.3 5z"/></svg>
-        <span>Gaming</span><i class="crown">👑</i>
+        <span>Gaming</span>
       </button>
       <button class="nav-item" data-tab="registry" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg>
-        <span>Tweaks</span><i class="crown">👑</i>
+        <span>Tweaks</span>
       </button>
       <button class="nav-item" data-tab="debloat" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
-        <span>Debloat</span><i class="crown">👑</i>
+        <span>Debloat</span>
       </button>
       <button class="nav-item" data-tab="privacy" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
-        <span>Privacy</span><i class="crown">👑</i>
+        <span>Privacy</span>
       </button>
       <button class="nav-item" data-tab="power" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>
-        <span>Power</span><i class="crown">👑</i>
+        <span>Power</span>
       </button>
       <button class="nav-item" data-tab="crosshair">
         <svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="3.2"/></svg>
@@ -174,19 +169,19 @@
       </button>
       <button class="nav-item" data-tab="potato" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M5 19a9 9 0 1114 0"/><path d="M12 13l4-4"/><circle cx="12" cy="13" r="1.4"/></svg>
-        <span>Potato Graphics</span><i class="crown">👑</i>
+        <span>Potato Graphics</span>
       </button>
       <button class="nav-item" data-tab="bios" data-pro="1">
         <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M4 10h3M4 14h3M17 10h3M17 14h3M10 4v3M14 4v3M10 17v3M14 17v3"/></svg>
-        <span>BIOS</span><i class="crown">👑</i>
+        <span>BIOS</span>
       </button>
       <button class="nav-item" data-tab="advanced" data-pro="1">
         <svg viewBox="0 0 24 24"><path d="M4 17l4-6 3 3 4-7 5 10z"/><path d="M4 21h16"/></svg>
-        <span>Advanced</span><i class="crown">👑</i>
+        <span>Advanced</span>
       </button>
       <button class="nav-item" data-tab="services" data-pro="1">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
-        <span>Services</span><i class="crown">👑</i>
+        <span>Services</span>
       </button>
       <div class="nav-sep"><span>SYSTEM</span></div>
       <button class="nav-item" data-tab="restore">
@@ -242,8 +237,8 @@
     <section class="page" id="page-cleaner">
       <div class="page-head"><h1>Cleaner</h1><p>Preview everything before anything is deleted</p></div>
       <div class="row">
-        <button class="btn primary" id="cleaner-scan">🔍&nbsp; Scan</button>
-        <button class="btn danger" id="cleaner-clean" disabled>🧹&nbsp; Clean selected</button>
+        <button class="btn primary" id="cleaner-scan">Scan</button>
+        <button class="btn danger" id="cleaner-clean" disabled>Clean selected</button>
         <label class="check"><input type="checkbox" id="cleaner-recycle" checked /><span class="box"></span>Empty Recycle Bin too</label>
       </div>
       <div class="progress" id="cleaner-progress" hidden><div class="fill"></div></div>
@@ -264,9 +259,9 @@
         <p class="dim" id="ram-detail">…</p>
         <div class="bar"><div class="bar-fill" id="ram-bar"></div></div>
         <div class="row">
-          <button class="btn primary pulse" id="ram-go">⚡&nbsp; Optimize now</button>
-          <button class="btn secondary" id="ram-refresh">↻&nbsp; Refresh</button>
-          <button class="btn secondary" id="ram-schedule" title="Trim idle memory every 15 min (Base)">🗓&nbsp; Standby janitor</button>
+          <button class="btn primary pulse" id="ram-go">Optimize now</button>
+          <button class="btn secondary" id="ram-refresh">Refresh</button>
+          <button class="btn secondary" id="ram-schedule" title="Trim idle memory every 15 min (Base)">Standby janitor</button>
         </div>
         <p class="dim" id="ram-status"></p>
       </div>
@@ -275,16 +270,16 @@
     <section class="page" id="page-network">
       <div class="pot-head">
         <div class="pot-title">
-          <span class="pot-title-icon">🌐</span>
+
           <div>
             <h1>Network</h1>
             <p>Tune DNS, adapter power, and TCP stack for lower ping.</p>
           </div>
         </div>
-        <button class="btn ch-pro-btn" id="net-unlock">👑 Unlock · $15</button>
+        <button class="btn ch-pro-btn" id="net-unlock">Unlock · $15</button>
       </div>
       <div class="glass card pot-banner" id="net-banner">
-        <span class="pot-eye">👁</span>
+        
         <p><b>Preview.</b> You're seeing every internet tweak Pro unlocks. Buy it once and it's yours for good.</p>
       </div>
       <div class="glass card">
@@ -306,23 +301,23 @@
         <div class="glass card">
           <h3>DNS lookup</h3>
           <div class="row"><input id="dns-host" class="input" value="google.com" />
-          <button class="btn primary" id="dns-go">🔍&nbsp; Resolve</button></div>
+          <button class="btn primary" id="dns-go">Resolve</button></div>
           <p class="dim" id="dns-out"></p>
           <h3 style="margin-top:18px">Speed test</h3>
           <p class="dim">Full bandwidth test coming soon — connection latency shown for now.</p>
-          <button class="btn secondary" id="lat-go">⚡&nbsp; Check latency</button>
+          <button class="btn secondary" id="lat-go">Check latency</button>
           <p class="dim" id="lat-out"></p>
         </div>
       </div>
     </section>
 
     <section class="page" id="page-presets">
-      <div class="page-head"><h1>Preset Stacks 🎯</h1><p>One click, one restore point, one undo — transparent bundles</p></div>
+      <div class="page-head"><h1>Preset Stacks</h1><p>One click, one restore point, one undo — transparent bundles</p></div>
       <div id="preset-list"><p class="dim">Loading…</p></div>
     </section>
 
     <section class="page" id="page-library">
-      <div class="page-head"><h1>Tweak Library 📚</h1><p id="library-count">Every tweak in one searchable place</p></div>
+      <div class="page-head"><h1>Tweak Library</h1><p id="library-count">Every tweak in one searchable place</p></div>
       <div class="glass card">
         <div class="row">
           <input id="library-search" class="input" placeholder="Search tweaks… (e.g. dns, mouse, hibernate)" autocomplete="off" spellcheck="false" />
@@ -340,43 +335,43 @@
     </section>
 
     <section class="page" id="page-tips">
-      <div class="page-head"><h1>Tips &amp; Tricks 💡</h1><p>What tweaks can't do — biggest wins first, zero downloads</p></div>
+      <div class="page-head"><h1>Tips &amp; Tricks</h1><p>What tweaks can't do — biggest wins first, zero downloads</p></div>
       <div class="glass card">
-        <h3>🥇 RAM: 8GB → 16GB is the #1 upgrade</h3>
+        <h3>RAM: 8GB to 16GB is the number one upgrade</h3>
         <p class="dim">No registry tweak creates memory. If your RAM sits above 85% while gaming, Windows pages to disk and you get exactly the late-game stutter tweaks can't fix. A matching 8GB stick is the cheapest fps-per-dollar on earth. Check your usage live on the Dashboard.</p>
       </div>
       <div class="glass card">
-        <h3>🥈 SSD + free space</h3>
+        <h3>SSD + free space</h3>
         <p class="dim">Windows AND your games belong on an SSD — a hard drive stutters no matter the tweaks. Keep 15–20% of the drive free; a nearly-full SSD slows down measurably. Storage Sense (Tweaks tab, free) automates the cleanup.</p>
       </div>
       <div class="glass card">
-        <h3>🥉 BIOS freebies: XMP/EXPO + Resizable BAR</h3>
+        <h3>BIOS freebies: XMP/EXPO + Resizable BAR</h3>
         <p class="dim">If your RAM runs at JEDEC speed instead of its rated XMP/EXPO profile, you're leaving up to 10–15% on the table — more than every registry tweak combined. Enable it in BIOS (usually one click), plus Resizable BAR if your GPU supports it. No software can do this for you.</p>
       </div>
       <div class="glass card">
-        <h3>🎮 Fortnite-specific</h3>
+        <h3>Fortnite-specific</h3>
         <p class="dim">Rendering Mode → <b>Performance</b> (not DX11/DX12) on weak GPUs · 3D Resolution slider to minimum, then raise until fps dips · cap framerate at your refresh rate (uncapped = heat = throttle = stutter) · Textures/Meshes Low · turn off Replays · NVIDIA Reflex Low+Boost if offered. Your Low-End preset saves the matching exes — use Gaming → Boost while playing.</p>
       </div>
       <div class="glass card">
-        <h3>🌡 Thermals are fps</h3>
+        <h3>Thermals are fps</h3>
         <p class="dim">Laptops lose 20–30% clocks when hot. Play plugged in, elevate the back for airflow, clean the fans yearly, and use the Active Cooling tweak (Power tab). If fps is great for 10 minutes then falls off a cliff, that's heat — not settings.</p>
       </div>
       <div class="glass card">
-        <h3>🌐 Lag vs stutter: know which you have</h3>
+        <h3>Lag vs stutter: know which you have</h3>
         <p class="dim">Rubber-banding/teleporting = <b>network</b> (use ethernet, close cloud backups, try the Network tab). Hitching/freezing with fine ping = <b>your PC</b> (RAM, thermals, disk). Fixing the wrong one wastes hours — diagnose first with the ping graph.</p>
       </div>
       <div class="glass card">
-        <h3>🧹 Match-day hygiene</h3>
+        <h3>Match-day hygiene</h3>
         <p class="dim">Before ranked: reboot (clears standby memory), pause OneDrive/Steam downloads, close Chrome (it eats RAM for breakfast), set Discord to Push-to-Talk. Five minutes, free fps.</p>
       </div>
       <div class="glass card">
-        <h3>🚫 What NOT to do</h3>
+        <h3>What NOT to do</h3>
         <p class="dim">Never disable Defender/antivirus for fps. Never run registry packs from random videos without backups (ours backs everything up — theirs don't). Never disable the pagefile on 8GB RAM. Never pay for "game booster" software — that's usually the malware.</p>
       </div>
     </section>
 
     <section class="page" id="page-gaming">
-      <div class="page-head"><h1>Gaming Mode 👑</h1><p>Lower latency, steadier frames</p></div>
+      <div class="page-head"><h1>Gaming Mode</h1><p>Lower latency, steadier frames</p></div>
       <div class="glass card lockable" data-pro-group>
         <h3>Free starter tweaks <span class="free-tag">FREE</span></h3>
         <div class="tweak-list" data-tweaks="gaming-free"></div>
@@ -389,15 +384,15 @@
         <div class="row">
           <input id="priority-exe" class="input" placeholder="e.g. FortniteClient-Win64-Shipping.exe" autocomplete="off" spellcheck="false" />
           <button class="btn secondary" id="priority-add">Add</button>
-          <button class="btn primary" id="priority-boost">⚡&nbsp; Boost running now</button>
-          <button class="btn secondary" id="priority-gpu" title="Force high-performance GPU for every saved game (Pro)">🎮&nbsp; Force discrete GPU</button>
+          <button class="btn primary" id="priority-boost">Boost running now</button>
+          <button class="btn secondary" id="priority-gpu" title="Force high-performance GPU for every saved game (Pro)">Force discrete GPU</button>
         </div>
         <div id="priority-list" class="file-list"></div>
       </div>
     </section>
 
     <section class="page" id="page-registry">
-      <div class="page-head"><h1>System Tweaks 👑</h1><p>CPU, visual and advanced tweaks — each one reversible</p></div>
+      <div class="page-head"><h1>System Tweaks</h1><p>CPU, visual and advanced tweaks — each one reversible</p></div>
       <div class="glass card lockable" data-pro-group>
         <h3>Performance &amp; CPU <span class="pro-tag">PRO</span></h3><div class="tweak-list" data-tweaks="cpu"></div>
         <h3>System boot &amp; behavior <span class="free-tag">FREE</span></h3><div class="tweak-list" data-tweaks="system"></div>
@@ -410,10 +405,10 @@
     </section>
 
     <section class="page" id="page-debloat">
-      <div class="page-head"><h1>Debloater 👑</h1><p>Remove bloat, disable latency-heavy devices</p></div>
+      <div class="page-head"><h1>Debloater</h1><p>Remove bloat, disable latency-heavy devices</p></div>
       <div class="glass card lockable" data-pro-group>
         <div class="row"><button class="btn secondary" id="debloat-scan">↻&nbsp; Scan installed</button>
-        <button class="btn danger" id="debloat-remove">🗑&nbsp; Remove selected</button></div>
+        <button class="btn danger" id="debloat-remove">Remove selected</button></div>
         <div id="debloat-list"><p class="dim">Press Scan to list bloatware.</p></div>
         <h3>One-click removals</h3><div class="tweak-list" data-tweaks="debloat"></div>
         <h3>Optional services <span class="pro-tag">PRO</span></h3>
@@ -423,15 +418,15 @@
     </section>
 
     <section class="page" id="page-privacy">
-      <div class="page-head"><h1>Privacy Hardening 👑</h1><p>Trackers off — hosts file backed up first</p></div>
+      <div class="page-head"><h1>Privacy Hardening</h1><p>Trackers off — hosts file backed up first</p></div>
       <div class="glass card lockable" data-pro-group>
-        <div class="row"><button class="btn gold" id="privacy-all">🛡&nbsp; Harden all</button></div>
+        <div class="row"><button class="btn gold" id="privacy-all">Harden all</button></div>
         <div class="tweak-list" data-tweaks="privacy"></div>
       </div>
     </section>
 
     <section class="page" id="page-power">
-      <div class="page-head"><h1>Power Management 👑</h1><p>Stop Windows throttling your hardware</p></div>
+      <div class="page-head"><h1>Power Management</h1><p>Stop Windows throttling your hardware</p></div>
       <div class="glass card lockable" data-pro-group><div class="tweak-list" data-tweaks="power"></div></div>
     </section>
 
@@ -449,7 +444,7 @@
             <div id="ch-saved"><p class="dim">Nothing saved yet. Build a crosshair you like, then hit Save current to keep it.</p></div>
           </div>
           <div class="glass card ch-sec" id="ch-sec-layers">
-            <div class="ch-card-head"><h3>LAYERS <span class="ch-lock" data-lock>🔒 Pro</span></h3><button class="btn ch-pro-btn small" id="ch-add-layer">+ Add</button></div>
+            <div class="ch-card-head"><h3>LAYERS <span class="ch-lock" data-lock>Pro</span></h3><button class="btn ch-pro-btn small" id="ch-add-layer">+ Add</button></div>
             <div id="ch-layers"></div>
             <p class="dim">Layers stack in order - later ones draw on top. Stack a thick dark shape under a thin bright one for a built-in outline.</p>
           </div>
@@ -463,7 +458,7 @@
             </div>
           </div>
           <div class="glass card ch-sec" id="ch-sec-size">
-            <div class="ch-card-head"><h3>SIZE <span class="ch-lock" data-lock>🔒 Pro</span></h3></div>
+            <div class="ch-card-head"><h3>SIZE <span class="ch-lock" data-lock>Pro</span></h3></div>
             <div class="ch-sliders">
               <label>Length <span id="ch-len-v">10 px</span><input type="range" id="ch-len" min="2" max="60" value="10" /></label>
               <label>Thickness <span id="ch-thick-v">2 px</span><input type="range" id="ch-thick" min="1" max="12" value="2" /></label>
@@ -471,7 +466,7 @@
             </div>
           </div>
           <div class="glass card ch-sec" id="ch-sec-outline">
-            <div class="ch-card-head"><h3>OUTLINE <span class="ch-lock" data-lock>🔒 Pro</span></h3><label class="toggle"><input type="checkbox" id="ch-outline-toggle" /><span class="track"></span></label></div>
+            <div class="ch-card-head"><h3>OUTLINE <span class="ch-lock" data-lock>Pro</span></h3><label class="toggle"><input type="checkbox" id="ch-outline-toggle" /><span class="track"></span></label></div>
             <p class="dim">Keeps this layer readable on bright scenes.</p>
             <div class="ch-sliders">
               <label>Outline thickness <span id="ch-ol-thick-v">1 px</span><input type="range" id="ch-ol-thick" min="1" max="6" value="1" /></label>
@@ -483,11 +478,11 @@
             </div>
           </div>
           <div class="glass card ch-sec" id="ch-sec-dot">
-            <div class="ch-card-head"><h3>CENTER DOT <span class="ch-lock" data-lock>🔒 Pro</span></h3><label class="toggle"><input type="checkbox" id="ch-dot-toggle" /><span class="track"></span></label></div>
+            <div class="ch-card-head"><h3>CENTER DOT <span class="ch-lock" data-lock>Pro</span></h3><label class="toggle"><input type="checkbox" id="ch-dot-toggle" /><span class="track"></span></label></div>
             <p class="dim">Adds a dot at the exact center of this layer.</p>
           </div>
           <div class="glass card ch-sec" id="ch-sec-position">
-            <div class="ch-card-head"><h3>POSITION <span class="ch-lock" data-lock>🔒 Pro</span></h3><button class="btn secondary small" id="ch-reset" title="Snap back to the center of the primary screen (Ctrl+Alt+Shift+R)">Recenter</button></div>
+            <div class="ch-card-head"><h3>POSITION <span class="ch-lock" data-lock>Pro</span></h3><button class="btn secondary small" id="ch-reset" title="Snap back to the center of the primary screen (Ctrl+Alt+Shift+R)">Recenter</button></div>
             <p class="dim">Moves the whole crosshair, not just this layer. If your game centers the aim point away from the middle of the screen (common on stretched resolutions), nudge it here until it lines up.</p>
             <div class="ch-sliders">
               <label>Horizontal <span id="ch-x-v">0 px</span><input type="range" id="ch-x" min="-500" max="500" value="0" /></label>
@@ -503,7 +498,7 @@
         </div>
         <div class="ch-side">
           <div class="glass card ch-preview-card">
-            <h3>✦ Preview</h3>
+            <h3>Preview</h3>
             <div id="ch-preview"><svg id="ch-preview-svg" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg"></svg></div>
           </div>
           <button class="btn ch-toggle" id="ch-toggle">⏻&nbsp; Turn crosshair on</button>
@@ -516,7 +511,7 @@
     <section class="page" id="page-potato">
       <div class="pot-head">
         <div class="pot-title">
-          <span class="pot-title-icon">🥔</span>
+
           <div>
             <h1>Potato Graphics</h1>
             <p>One-click low-graphics profiles for competitive games.</p>
@@ -525,7 +520,7 @@
         <button class="btn ch-pro-btn" id="pot-unlock">Unlock · $15</button>
       </div>
       <div class="glass card pot-banner">
-        <span class="pot-eye">👁</span>
+        
         <p><b>Preview.</b> Potato Graphics needs Pro and an NVIDIA card. Buy Pro once and it is yours for good — it includes this and every other tool.</p>
       </div>
       <div class="glass card">
@@ -537,16 +532,16 @@
     <section class="page" id="page-bios">
       <div class="pot-head">
         <div class="pot-title">
-          <span class="pot-title-icon">⚙️</span>
+
           <div>
             <h1>BIOS</h1>
             <p>Guided firmware settings for max throughput.</p>
           </div>
         </div>
-        <button class="btn ch-pro-btn" id="bios-unlock">👑 Unlock · $15</button>
+        <button class="btn ch-pro-btn" id="bios-unlock">Unlock · $15</button>
       </div>
       <div class="glass card pot-banner" id="bios-banner">
-        <span class="pot-eye">👁</span>
+        
         <p><b>Preview.</b> You're seeing everything the Pro tier unlocks. Buy it once and it's yours for good.</p>
       </div>
       <div class="glass card">
@@ -576,16 +571,16 @@
     <section class="page" id="page-advanced">
       <div class="pot-head">
         <div class="pot-title">
-          <span class="pot-title-icon">🧠</span>
+
           <div>
             <h1>Advanced</h1>
             <p>Low-level memory, kernel, and GPU tuning.</p>
           </div>
         </div>
-        <button class="btn ch-pro-btn" id="adv-unlock">👑 Unlock · $15</button>
+        <button class="btn ch-pro-btn" id="adv-unlock">Unlock · $15</button>
       </div>
       <div class="glass card pot-banner" id="adv-banner">
-        <span class="pot-eye">👁</span>
+        
         <p><b>Preview.</b> You're seeing every advanced tweak Pro unlocks. Buy it once and it's yours for good.</p>
       </div>
       <div class="glass card">
@@ -599,16 +594,16 @@
     <section class="page" id="page-services">
       <div class="pot-head">
         <div class="pot-title">
-          <span class="pot-title-icon">⚙️</span>
+
           <div>
             <h1>Services</h1>
             <p>Disable heavy background services &amp; tasks.</p>
           </div>
         </div>
-        <button class="btn ch-pro-btn" id="svc-unlock">👑 Unlock · $15</button>
+        <button class="btn ch-pro-btn" id="svc-unlock">Unlock · $15</button>
       </div>
       <div class="glass card pot-banner" id="svc-banner">
-        <span class="pot-eye">👁</span>
+        
         <p><b>Preview.</b> You're seeing every service tweak Pro unlocks. Buy it once and it's yours for good. Every change snapshots its previous state — Revert sits on each card.</p>
       </div>
       <div class="glass card">
@@ -620,7 +615,7 @@
     </section>
 
     <section class="page" id="page-benchmark">
-      <div class="page-head"><h1>📊 Benchmark</h1><p>Measure your PC before and after tweaks</p></div>
+      <div class="page-head"><h1>Benchmark</h1><p>Measure your PC before and after tweaks</p></div>
       <div class="glass card">
         <h3>Test duration</h3>
         <div class="row" id="bench-durations">
@@ -697,10 +692,10 @@
       <div class="page-head"><h1>Safety &amp; Restore</h1><p>Restore points and undo — available to everyone</p></div>
       <div class="glass card">
         <div class="row">
-        <button class="btn primary" id="restore-create">🛡&nbsp; Create restore point</button>
+        <button class="btn primary" id="restore-create">Create restore point</button>
         <button class="btn secondary" id="restore-undo">↩&nbsp; Undo last tweak</button>
         <button class="btn secondary" id="restore-all">⟲&nbsp; Revert all changes</button>
-        <button class="btn danger" id="restore-factory" title="Remove every tweak on record and park the power plan on Balanced">🧨&nbsp; Factory reset tweaks</button>
+        <button class="btn danger" id="restore-factory" title="Remove every tweak on record and park the power plan on Balanced">Factory reset tweaks</button>
         </div>
         <p class="dim" id="restore-status"></p>
       </div>
@@ -708,7 +703,7 @@
     </section>
 
     <section class="page" id="page-owner">
-      <div class="page-head"><h1>Owner Panel 🛡</h1><p>Accounts on this PC — owner role + passphrase required</p></div>
+      <div class="page-head"><h1>Owner Panel</h1><p>Accounts on this PC — owner role + passphrase required</p></div>
       <div class="grid two">
         <div class="glass card"><h3>Users</h3><div class="big-number" id="owner-user-count">–</div></div>
         <div class="glass card"><h3>Pro licenses</h3><div class="big-number" id="owner-pro-count">–</div></div>
@@ -756,12 +751,13 @@
             <option value="cyan">Cyan</option>
             <option value="orange">Ember Orange</option>
             <option value="silver">Silver</option>
+            <option value="white">Mono White</option>
           </select>
         </div>
         <p class="dim">Applies instantly. Lite mode (below) still overrides effects for speed.</p>
       </div>
       <div class="glass card glow-gold">
-        <h3>Activate Pro 👑</h3>
+        <h3>Activate Pro</h3>
         <p id="license-status" class="dim">Checking status…</p>
         <div class="cashapp">
           <div class="cash-tag">$AlwaysBetOnBright</div>

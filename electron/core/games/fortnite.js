@@ -23,7 +23,7 @@ const GAME = {
   id: 'fortnite',
   name: 'Fortnite',
   desc: 'Low-graphics competitive profile',
-  icon: '🎯',
+  icon: '',
   settings: [
     { label: 'VSync off', badge: 'safe' },
     { label: 'Grass off (FPS boost)', badge: 'safe' },

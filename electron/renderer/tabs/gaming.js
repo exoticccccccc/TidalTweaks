@@ -38,7 +38,7 @@
       const row = document.createElement('div');
       row.className = 'file-row';
       const name = document.createElement('span');
-      name.textContent = '🎮 ' + g;
+      name.textContent = g;
       const rm = document.createElement('button');
       rm.className = 'btn secondary';
       rm.style.cssText = 'padding:4px 10px;font-size:11px';

@@ -4,7 +4,7 @@
  * Pro (tier >= 2, enforced in main): MY CROSSHAIRS save/load, LAYERS add/
  * remove/visibility, SIZE sliders, OUTLINE toggle+thickness+color, CENTER
  * DOT toggle, POSITION sliders + Recenter + 1px nudge arrows. Purple #8B5CF6
- * marks every Pro control; locked sections grey out with a 🔒 Pro badge. */
+ * marks every Pro control; locked sections grey out with a Pro badge. */
 (function () {
   const TT = window.TT;
   const $ = (id) => document.getElementById(id);
@@ -142,7 +142,7 @@
   function renderLocks() {
     const pro = isPro();
     document.querySelectorAll('#page-crosshair [data-lock]').forEach((el) => {
-      el.textContent = pro ? 'Pro' : '🔒 Pro';
+      el.textContent = 'Pro';
       el.classList.toggle('unlocked', pro);
     });
     ['ch-sec-layers', 'ch-sec-size', 'ch-sec-outline', 'ch-sec-dot', 'ch-sec-position'].forEach((id) => {
@@ -167,12 +167,12 @@
     });
     const save = $('ch-save');
     if (save) {
-      save.innerHTML = pro ? 'Save current' : '🔒 Save current';
+      save.innerHTML = 'Save current';
       save.title = pro ? '' : 'Saving custom designs needs Pro';
     }
     const add = $('ch-add-layer');
     if (add) {
-      add.innerHTML = pro ? '+ Add' : '🔒 + Add';
+      add.innerHTML = '+ Add';
       add.title = pro ? '' : 'Layers need Pro';
     }
     const banner = $('ch-banner-text');

@@ -73,7 +73,7 @@ const PREBUILT = [
     launchOptions: '-USEALLAVAILABLECORES -NOSPLASH -LIMITCLIENTTICKS=120',
   },
   {
-    id: 'game-valorant', name: 'Valorant', category: 'FPS', icon: '🎯',
+    id: 'game-valorant', name: 'Valorant', category: 'FPS', icon: '',
     processes: ['VALORANT-Win64-Shipping.exe'],
     tweaks: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'game-keyboard-fast', 'vis-no-sticky', 'net-flush-dns'],
     priority: 'high', hags: true, power: 'ultimate',

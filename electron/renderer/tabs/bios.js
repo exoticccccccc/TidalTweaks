@@ -2,7 +2,7 @@
 /* BIOS tab (Pro): guided firmware checklist — these settings live in the
  * BIOS and can't be applied programmatically, so each row opens a modal with
  * vendor-specific menu paths + steps and a Copy-settings button. Free users
- * see the full list (preview) with 🔒 locks; clicking a locked row shows the
+ * see the full list (preview) with PRO locks; clicking a locked row shows the
  * preview text. Motherboard vendor is auto-detected via WMI (bios:detect)
  * and selects the matching vendor tab + menu path automatically. */
 (function () {
@@ -207,7 +207,7 @@
     const pro = isPro();
     const unl = $('bios-unlock');
     if (unl) {
-      unl.textContent = pro ? 'Pro active ✓' : '👑 Unlock · $15';
+      unl.textContent = pro ? 'Pro active' : 'Unlock · $15';
       unl.disabled = pro;
       unl.style.opacity = pro ? '0.6' : '1';
     }
@@ -251,12 +251,12 @@
       }
       const lock = document.createElement('span');
       lock.className = 'bios-lock';
-      lock.textContent = pro ? '›' : '🔒';
+      lock.textContent = pro ? '›' : 'PRO';
       lock.title = pro ? 'Open guide' : 'Guide needs Pro';
       row.append(info, lock);
       row.onclick = () => {
         if (!isPro()) {
-          TT.toast(`👁 Preview. ${PREVIEW_TEXT}`, 'gold', 5000);
+          TT.toast(`Preview. ${PREVIEW_TEXT}`, '', 5000);
           TT.switchTab('settings');
           return;
         }
@@ -336,7 +336,7 @@
     const unl = $('bios-unlock');
     if (unl) unl.onclick = () => {
       if (isPro()) return;
-      TT.toast('🔒 BIOS guides need Pro ($15) — opening Settings…', 'gold', 3500);
+      TT.toast('BIOS guides need Pro ($15) — opening Settings…', '', 3500);
       TT.switchTab('settings');
     };
     const close = $('bios-m-close');

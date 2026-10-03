@@ -23,7 +23,7 @@
   const unl = $('adv-unlock');
   if (unl) unl.onclick = () => {
     if (TT.pro) return;
-    TT.toast('🔒 Advanced tweaks need Pro ($15) — opening Settings…', 'gold', 3500);
+    TT.toast('Advanced tweaks need Pro ($15) — opening Settings…', '', 3500);
     TT.switchTab('settings');
   };
   TT._show.advanced = async () => {
@@ -31,7 +31,7 @@
     const banner = $('adv-banner');
     if (banner) banner.hidden = TT.pro;
     if (unl) {
-      unl.textContent = TT.pro ? 'Pro active ✓' : '👑 Unlock · $15';
+      unl.textContent = TT.pro ? 'Pro active' : 'Unlock · $15';
       unl.disabled = TT.pro;
       unl.style.opacity = TT.pro ? '0.6' : '1';
     }

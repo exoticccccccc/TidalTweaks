@@ -42,7 +42,7 @@
   }
 
   function needPro() {
-    TT.toast(`👁 Preview. ${PREVIEW_TEXT}`, 'gold', 4500);
+    TT.toast(`Preview. ${PREVIEW_TEXT}`, '', 4500);
     TT.switchTab('settings');
   }
 
@@ -68,8 +68,8 @@
   async function revertRow(row) {
     let res;
     try { res = await TT.api.tweak.revert(row.id); }
-    catch (e) { res = { ok: false, message: String(e) }; }
-    TT.toast((res && res.message) || 'Nothing to revert.', res && res.ok ? 'success' : '', 4500);
+    catch (e) { res = { ok: false }; }
+    TT.toast((res && res.message) || 'Nothing to revert yet.', res && res.ok ? 'success' : '', 4500);
   }
 
   function rowMatches(row) {
@@ -87,7 +87,10 @@
       box.innerHTML = '<p class="dim">Loading services…</p>';
       return;
     }
+    // Remodel Batch 5: build everything into a fragment first — one append,
+    // one reflow, no matter how many rows match.
     let shown = 0;
+    const frag = document.createDocumentFragment();
     sections.forEach((sec) => {
       const rows = (sec.rows || []).filter(rowMatches);
       if (query && !rows.length) return; // hide empty sections while searching
@@ -132,7 +135,7 @@
         if (!pro) {
           const lock = document.createElement('button');
           lock.className = 'btn secondary';
-          lock.textContent = '🔒';
+          lock.textContent = 'PRO';
           lock.title = `${meta.t} needs Pro`;
           lock.onclick = needPro;
           actions.appendChild(lock);
@@ -151,8 +154,9 @@
         list.appendChild(card);
       });
       wrap.appendChild(list);
-      box.appendChild(wrap);
+      frag.appendChild(wrap);
     });
+    box.appendChild(frag);
     if (query && !shown) box.innerHTML = '<p class="dim">No services match that search.</p>';
   }
 
@@ -168,13 +172,19 @@
     const unl = $('svc-unlock');
     if (unl) unl.onclick = () => {
       if (isPro()) return;
-      TT.toast('🔒 Service tweaks need Pro ($15) — opening Settings…', 'gold', 3500);
+      TT.toast('Service tweaks need Pro ($15) — opening Settings…', '', 3500);
       TT.switchTab('settings');
     };
     const search = $('svc-search');
+    // Debounced search: re-rendering ~110 rows per keystroke janks low-end.
+    let searchTimer = null;
     if (search) search.oninput = () => {
-      query = (search.value || '').trim().toLowerCase();
-      render();
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        searchTimer = null;
+        query = (search.value || '').trim().toLowerCase();
+        render();
+      }, 150);
     };
   }
 
@@ -184,7 +194,7 @@
     if (banner) banner.hidden = isPro();
     const unl = $('svc-unlock');
     if (unl) {
-      unl.textContent = isPro() ? 'Pro active ✓' : '👑 Unlock · $15';
+      unl.textContent = isPro() ? 'Pro active' : 'Unlock · $15';
       unl.disabled = isPro();
       unl.style.opacity = isPro() ? '0.6' : '1';
     }

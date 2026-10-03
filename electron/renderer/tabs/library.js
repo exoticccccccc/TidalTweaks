@@ -1,7 +1,7 @@
 'use strict';
 /* Library tab (Free to browse): every tweak in the catalog, searchable and
  * filterable by tier. Rows render through the SAME renderTweaks cards (with
- * their 🔒 buttons + confirm modals), so there is exactly one code path for
+ * their tier buttons + confirm modals), so there is exactly one code path for
  * applying anything. Lazy: builds on first show. */
 (function () {
   const TT = window.TT;

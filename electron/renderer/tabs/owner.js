@@ -92,7 +92,7 @@
       info.className = 'info';
       const b = document.createElement('b');
       const ut = (typeof u.tier === 'number') ? u.tier : 0;
-      b.textContent = u.username + (ut >= 2 ? '  👑' : '');
+      b.textContent = u.username + (ut >= 2 ? ' (PRO)' : '');
       const small = document.createElement('small');
       small.textContent = `${u.role} · ${(TT.TIER_NAMES[ut] || 'Free')}${ut > 0 ? ` ($${TT.TIER_PRICES[ut]})` : ''} · created ${(u.createdAt || '').slice(0, 10) || '?'}` +
         (u.activatedAt ? ` · active since ${u.activatedAt.slice(0, 10)}` : '');

@@ -44,9 +44,9 @@
       const sub = document.createElement('p');
       sub.className = 'dim';
       const osv = p.os || 'both';
-      sub.textContent = `🖥 ${osv === 'both' ? 'Windows 10 · 11' : (osv === 'win11' ? 'Windows 11' : 'Windows 10')}` +
+      sub.textContent = `${osv === 'both' ? 'Windows 10 / 11' : (osv === 'win11' ? 'Windows 11' : 'Windows 10')}` +
         ` · ${(p.ids || []).length} tweaks` +
-        ((p.games && p.games.length) ? ` · 🎮 saves: ${p.games.join(', ')}` : '');
+        ((p.games && p.games.length) ? ` · saves: ${p.games.join(', ')}` : '');
       // Transparent contents in a SCROLLABLE box so Apply/Revert never scroll off.
       const ul = document.createElement('div');
       ul.className = 'preset-includes';
@@ -67,7 +67,7 @@
       const locked = TT.tier < need;
       const btn = document.createElement('button');
       btn.className = 'btn ' + (locked ? 'secondary' : (need >= 2 ? 'gold' : 'primary'));
-      btn.textContent = locked ? `🔒 ${TT.TIER_NAMES[need]}` : `⚡ Apply ${(p.ids || []).length} tweaks`;
+      btn.textContent = locked ? (TT.TIER_NAMES[need] || 'PRO').toUpperCase() : `Apply ${(p.ids || []).length} tweaks`;
       btn.onclick = () => applyPreset(p, locked);
       row.appendChild(btn);
       // Revert-preset: undoes the whole stack via its single undo entry.
@@ -85,7 +85,7 @@
   async function applyPreset(p, locked) {
     const need = p.tier || 0;
     if (locked) {
-      TT.toast(`🔒 '${p.title}' needs ${TT.TIER_NAMES[need]} ($${TT.TIER_PRICES[need]}) — opening Settings…`, 'gold', 3500);
+      TT.toast(`'${p.title}' needs ${TT.TIER_NAMES[need]} ($${TT.TIER_PRICES[need]}) — opening Settings…`, '', 3500);
       TT.switchTab('settings');
       return;
     }
@@ -102,7 +102,7 @@
     TT.progress.done((res && res.message) || 'Preset hit a snag — try again.', !!(res && res.ok));
     if (res && res.ok) {
       TT.confetti();
-      TT.toast(`✅ ${p.title} applied (${(p.ids || []).length} tweaks).`, 'success', 4000);
+      TT.toast(`${p.title} applied (${(p.ids || []).length} tweaks).`, 'success', 4000);
     } else {
       TT.toast(`Preset incomplete — ${(res && res.message) || 'try again'}.`, 'error', 5000);
     }
@@ -124,6 +124,15 @@
     if (TT.refreshRestore) TT.refreshRestore();
   }
 
-  // Always reload on show (cheap local list) so tier unlocks refresh instantly.
-  TT._show.presets = () => load();
+  // Remodel Batch 5: DOM cache — build once, re-render only when the tier
+  // changes (unlock purchase) or after an apply/revert touches states.
+  let builtTier = null;
+  let builtOnce = false;
+  function show() {
+    if (builtOnce && builtTier === TT.tier) return; // cached, still valid
+    builtTier = TT.tier;
+    builtOnce = true;
+    load();
+  }
+  TT._show.presets = () => show();
 })();

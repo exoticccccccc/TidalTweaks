@@ -47,7 +47,7 @@
     lastScan = res.files || [];
     list.innerHTML = '';
     if (!lastScan.length) {
-      list.innerHTML = '<p class="dim">✨ Nothing to clean — system is spotless.</p>';
+      list.innerHTML = '<p class="dim">Nothing to clean — system is spotless.</p>';
       return;
     }
     // Render cap: thousands of DOM rows jank low-end machines. Files arrive
@@ -106,7 +106,7 @@
     busy = true;
     $('cleaner-scan').disabled = true;
     $('cleaner-clean').disabled = true;
-    $('cleaner-clean').textContent = '🧹 Cleaning… (silent)';
+    $('cleaner-clean').textContent = 'Cleaning… (silent)';
     setProgress(0.3);
     const box = $('cleaner-result');
     box.hidden = false;
@@ -119,13 +119,13 @@
     busy = false;
     $('cleaner-scan').disabled = false;
     $('cleaner-clean').disabled = false;
-    $('cleaner-clean').textContent = '🧹  Clean selected';
+    $('cleaner-clean').textContent = 'Clean selected';
     if (!res || !res.ok) { TT.toast('Cleanup hit a snag — try again. Nothing was harmed.', 'error', 5000); return; }
     // Inline results panel: files cleaned, space freed, skipped count. No terminal.
     box.hidden = false;
     box.innerHTML = '';
     const h = document.createElement('h3');
-    h.textContent = '✨ Cleanup complete — all silent, no terminal shown';
+    h.textContent = 'Cleanup complete — all silent, no terminal shown';
     const big = document.createElement('div');
     big.className = 'big-number';
     big.textContent = '0 MB';

@@ -1,6 +1,6 @@
 'use strict';
 /* Potato Graphics tab (Pro): one-click low-graphics profiles for competitive
- * games. Free users see the preview banner + game list with 🔒 locks;
+ * games. Free users see the preview banner + game list with PRO locks;
  * clicking a locked card shows the preview text. Pro users get Apply buttons
  * that run the core/games/* modules (timestamped backup + undo-log entry),
  * then toast the restart reminder. Game metadata (names, settings, Safe /
@@ -44,7 +44,7 @@
       card.className = 'pot-card';
       const icon = document.createElement('div');
       icon.className = 'pot-icon';
-      icon.textContent = g.icon || '🎮';
+      icon.textContent = '';
       const info = document.createElement('div');
       info.className = 'pot-info';
       const title = document.createElement('b');
@@ -83,9 +83,9 @@
         btn.onclick = () => applyGame(g);
       } else {
         btn.className = 'btn secondary pot-locked';
-        btn.textContent = '🔒';
+        btn.textContent = 'PRO';
         btn.title = `${g.name} needs Pro — click for preview`;
-        btn.onclick = () => TT.toast(`👁 Preview. ${PREVIEW_TEXT}`, 'gold', 6000);
+        btn.onclick = () => TT.toast(`Preview. ${PREVIEW_TEXT}`, '', 6000);
       }
       actions.appendChild(btn);
       card.append(icon, info, actions);
@@ -139,7 +139,7 @@
     const unl = $('pot-unlock');
     if (unl) unl.onclick = () => {
       if (isPro()) return;
-      TT.toast('🔒 Potato Graphics needs Pro ($15) — opening Settings…', 'gold', 3500);
+      TT.toast('Potato Graphics needs Pro ($15) — opening Settings…', '', 3500);
       TT.switchTab('settings');
     };
   }

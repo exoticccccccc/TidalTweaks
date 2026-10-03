@@ -18,7 +18,7 @@
 
   document.getElementById('privacy-all').onclick = async () => {
     if (TT.tier < 2) { // bulk action is Pro-only even though cards show locks
-      TT.toast('🔒 Harden-all needs Pro ($15) — opening Settings…', 'gold', 3500);
+      TT.toast('Harden-all needs Pro ($15) — opening Settings…', '', 3500);
       TT.switchTab('settings');
       return;
     }

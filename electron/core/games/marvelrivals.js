@@ -19,7 +19,7 @@ const GAME = {
   id: 'rivals',
   name: 'Marvel Rivals',
   desc: 'Low-graphics competitive profile',
-  icon: '🦸',
+  icon: '',
   settings: [
     { label: 'Resolution quality 70%', badge: 'caution' },
     { label: 'Shadows lowest', badge: 'caution' },

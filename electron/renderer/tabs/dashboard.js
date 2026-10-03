@@ -87,17 +87,23 @@
     const p = $('page-dashboard');
     return p && p.classList.contains('active');
   }
-  // Batch 7 lazy + Batch 8 Performance Mode: nothing polls until first shown;
-  // interval is 2500 ms normal, 5000 ms in Performance Mode (re-armed per show
-  // so toggling perf in Settings takes effect on next visit).
+  // Lazy + Performance Mode: nothing polls until first shown; interval is
+  // 2500 ms normal, 5000 ms in Performance Mode. Re-armed on show AND on the
+  // tt:perf event so toggling the switch takes effect immediately.
   function intervalMs() {
     try { if (TT.perf) return 5000; } catch { /* ignore */ }
     return 2500;
   }
+  function armTimer() {
+    if (timer) { try { clearInterval(timer); } catch { /* ignore */ } timer = null; }
+    timer = setInterval(() => { if (visible()) live(); }, intervalMs());
+  }
   TT._show.dashboard = () => {
     statics();
     live();
-    if (timer) { try { clearInterval(timer); } catch { /* ignore */ } timer = null; }
-    timer = setInterval(() => { if (visible()) live(); }, intervalMs());
+    armTimer();
   };
+  try {
+    window.addEventListener('tt:perf', () => { if (visible()) armTimer(); });
+  } catch { /* ignore */ }
 })();

@@ -83,7 +83,7 @@
       cb.onchange = async () => {
         if (TT.tier < 3) { // fail fast before the confirm modal (Extreme-only)
           cb.checked = !cb.checked;
-          TT.toast('🔒 Device disables need Extreme ($30) — opening Settings…', 'gold', 3500);
+          TT.toast('Device disables need Extreme ($30) — opening Settings…', '', 3500);
           TT.switchTab('settings');
           return;
         }

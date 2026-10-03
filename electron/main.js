@@ -34,7 +34,8 @@ const store = new Store({
     activatedAt: null,
     liteMode: 'auto', // 'auto' | 'on' | 'off' — see resolveLite()
     perfMode: false, // Batch 8 Performance Mode (Issue 4): 5s polling, no anim
-    theme: 'tsunami',  // tsunami | abyss | royal | emerald (Settings → Appearance)
+    windowBounds: null, // UI remodel Batch 1: last size/pos/maximized (null = maximize)
+    theme: 'oled',  // UI remodel: OLED monochrome is the default
     accent: 'blue',    // blue | gold | violet | mint | rose
     // Crosshair overlay: last used design (see core/crosshair.js) + Pro saves.
     crosshair: null,
@@ -393,16 +394,51 @@ function ensureTray() {
   return tray;
 }
 
+/* UI remodel Batch 1 — window geometry memory (electron-store).
+ * Fresh install (no saved bounds): open MAXIMIZED for the fullscreen feel.
+ * Later launches: restore the last size/position/maximized flag. X still hides
+ * to tray (crosshair independence); only Tray → Quit really quits. */
+function savedBounds() {
+  try {
+    const b = store.get('windowBounds');
+    if (b && typeof b === 'object' && Number.isFinite(b.width) && Number.isFinite(b.height)) return b;
+  } catch { /* ignore */ }
+  return null;
+}
+let saveBoundsTimer = null;
+function scheduleBoundsSave() {
+  try {
+    if (saveBoundsTimer) clearTimeout(saveBoundsTimer);
+  } catch { /* ignore */ }
+  saveBoundsTimer = setTimeout(() => {
+    saveBoundsTimer = null;
+    try {
+      if (!win || win.isDestroyed()) return;
+      if (win.isMaximized()) store.set('windowBounds', { maximized: true });
+      else {
+        const b = win.getBounds();
+        store.set('windowBounds', {
+          width: b.width, height: b.height, x: b.x, y: b.y, maximized: false,
+        });
+      }
+    } catch { /* ignore */ }
+  }, 400);
+}
+
 function createWindow() {
+  const prev = savedBounds();
   win = new BrowserWindow({
-    width: 1280,
-    height: 820,
+    width: (prev && prev.width) || 1280,
+    height: (prev && prev.height) || 820,
+    x: (prev && Number.isFinite(prev.x)) ? prev.x : undefined,
+    y: (prev && Number.isFinite(prev.y)) ? prev.y : undefined,
     minWidth: 1024,
     minHeight: 640,
     // Frameless: the renderer draws its own titlebar (see renderer/index.html).
     // backgroundColor avoids a white flash while the page loads.
     frame: false,
-    backgroundColor: '#0D2140',
+    titleBarStyle: 'hidden',
+    backgroundColor: '#000000',
     show: false, // reveal only when ready (no blank-window flicker)
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -416,7 +452,11 @@ function createWindow() {
   // Show IMMEDIATELY on ready-to-show; heavy work is deferred to setTimeout
   // below so low-end PCs paint the skeleton instead of hanging with a busy cursor.
   win.once('ready-to-show', () => {
-    try { win.show(); } catch { /* ignore */ }
+    try {
+      win.show();
+      // Fresh install (or last state maximized): take the whole screen.
+      if (!prev || prev.maximized) { try { win.maximize(); } catch { /* ignore */ } }
+    } catch { /* ignore */ }
     // Defer non-critical startup AFTER the window is visible.
     setTimeout(() => {
       try { crosshair.ensureWindow(); } catch { /* ignore */ }
@@ -434,9 +474,13 @@ function createWindow() {
     }, 1000);
   });
 
-  // Keep the renderer's maximise/restore glyph in sync with the real state.
-  win.on('maximize', () => { try { win.webContents.send('win:state', { maximized: true }); } catch {} });
-  win.on('unmaximize', () => { try { win.webContents.send('win:state', { maximized: false }); } catch {} });
+  // Geometry memory (remodel Batch 1): persist size/pos/maximized, debounced.
+  // win:state pushes stay for compat (the remodelled titlebar has no max
+  // button, but the channel costs nothing and keeps preload stable).
+  win.on('maximize', () => { try { win.webContents.send('win:state', { maximized: true }); } catch {} scheduleBoundsSave(); });
+  win.on('unmaximize', () => { try { win.webContents.send('win:state', { maximized: false }); } catch {} scheduleBoundsSave(); });
+  win.on('resize', () => scheduleBoundsSave());
+  win.on('move', () => scheduleBoundsSave());
 
   // Never let pages navigate away / open popups inside the app shell.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -486,7 +530,7 @@ app.whenReady().then(() => {
       try {
         if (accountTier() < 2) {
           crosshair.ensureWindow();
-          crosshair.notifyMain('🔒 Recenter needs Pro ($15) — activate in Settings.');
+          crosshair.notifyMain('Recenter needs Pro ($15) — activate in Settings.');
           return;
         }
         crosshair.resetToCenter();
@@ -844,7 +888,7 @@ ipcMain.handle('preset:apply', async (_e, { id }) => {
         if (!merged.some((m) => String(m).toLowerCase() === n.toLowerCase())) merged.push(n);
       });
       store.set('priorityGames', merged.slice(0, 20));
-      if (clean.length) gamesNote = ` + 🎮 ${clean.length} game exe(s) saved`;
+      if (clean.length) gamesNote = ` + ${clean.length} game exe(s) saved`;
     }
     return {
       ok: done === p.ids.length,
@@ -1056,11 +1100,11 @@ ipcMain.handle('license:set-lite', (_e, { value } = {}) => {
 /* Appearance settings (Settings → Appearance). Device-level like liteMode —
  * themes are a display preference, not per-account data. */
 const THEMES = ['tsunami', 'abyss', 'royal', 'emerald', 'crimson', 'sunset', 'arctic', 'mono', 'inferno', 'candy', 'toxic', 'oled', 'pulse'];
-const ACCENTS = ['blue', 'gold', 'violet', 'mint', 'rose', 'cyan', 'orange', 'silver'];
+const ACCENTS = ['blue', 'gold', 'violet', 'mint', 'rose', 'cyan', 'orange', 'silver', 'white'];
 ipcMain.handle('settings:get', () => ({
   ok: true,
-  theme: THEMES.includes(store.get('theme')) ? store.get('theme') : 'tsunami',
-  accent: ACCENTS.includes(store.get('accent')) ? store.get('accent') : 'blue',
+  theme: THEMES.includes(store.get('theme')) ? store.get('theme') : 'oled',
+  accent: ACCENTS.includes(store.get('accent')) ? store.get('accent') : 'white',
   perfMode: !!store.get('perfMode'),
   priorityGames: Array.isArray(store.get('priorityGames')) ? store.get('priorityGames') : [],
   // Last used crosshair design (Crosshair tab). Sanitized in core/crosshair.js.
@@ -1493,7 +1537,7 @@ ipcMain.handle('profiles:create', (_e, { profile } = {}) => {
   try {
     const v = gameProfiles.validateProfile(profile || {});
     if (!v.ok) return { ok: false, message: v.message };
-    const p = { ...profile, id: String(profile.id).toLowerCase(), icon: profile.icon || '🎮' };
+    const p = { ...profile, id: String(profile.id).toLowerCase(), icon: profile.icon || '' };
     if (!p.id.startsWith('custom-')) return { ok: false, message: 'Custom ids must start with "custom-".' };
     const unknown = (p.tweaks || []).filter((tid) => typeof TWEAK_REGISTRY[tid] !== 'function');
     if (unknown.length) return { ok: false, message: `Unknown tweak ids: ${unknown.slice(0, 5).join(', ')}.` };
@@ -1540,7 +1584,7 @@ ipcMain.handle('profiles:import', (_e, { data } = {}) => {
     const list = gameProfiles.readCustom();
     let nid = base, i = 2;
     while (list.some((x) => x.id === nid) || findGameProfile(nid)) nid = `${base}-${i++}`;
-    const clean = { ...obj, id: nid, icon: obj.icon || '🎮' };
+    const clean = { ...obj, id: nid, icon: obj.icon || '' };
     list.push(clean);
     gameProfiles.writeCustom(list);
     return { ok: true, message: `Imported as “${clean.name}”.` };
@@ -1575,42 +1619,11 @@ ipcMain.handle('profiles:set-auto', (_e, { id, enabled } = {}) => {
   }
 });
 
-/* Auto-apply watchdog: every 15s, apply (tweaks + priority) for newly seen
- * watched games, revert when they close. Only runs while at least one
- * profile has auto-apply on; a tasklist poll is the only cost. */
-const profileAutoActive = new Set();
-setInterval(async () => {
-  try {
-    const auto = store.get('profileAuto') || {};
-    const enabled = Object.keys(auto).filter((k) => auto[k]);
-    if (!enabled.length) {
-      for (const pid of [...profileAutoActive]) {
-        try { await backup.revertOne('profile:auto:' + pid); } catch { /* ignore */ }
-        profileAutoActive.delete(pid);
-      }
-      return;
-    }
-    const running = await gameProfiles.listRunning();
-    for (const pid of enabled) {
-      const p = findGameProfile(pid);
-      if (!p || !(p.processes || []).length) continue;
-      const up = p.processes.some((n) => running.has(String(n).toLowerCase()));
-      if (up && !profileAutoActive.has(pid)) {
-        const r = await applyGameProfile(p, { auto: true });
-        if (r && r.ok) profileAutoActive.add(pid);
-      } else if (!up && profileAutoActive.has(pid)) {
-        try { await backup.revertOne('profile:auto:' + pid); } catch { /* ignore */ }
-        profileAutoActive.delete(pid);
-      }
-    }
-    for (const pid of [...profileAutoActive]) {
-      if (!enabled.includes(pid)) {
-        try { await backup.revertOne('profile:auto:' + pid); } catch { /* ignore */ }
-        profileAutoActive.delete(pid);
-      }
-    }
-  } catch { /* watchdog never crashes the app */ }
-}, 15000);
+/* Profiles UI was removed (remodel Batch 5) along with its tab, so the 15s
+ * tasklist auto-apply watchdog is retired — it was the last background poll
+ * in the main process. Old 'profile:*' undo entries stay revertable through
+ * backup.revertOne (Restore tab history is untouched); the profiles:* IPC
+ * handlers below remain as dormant compat for those entries. */
 
 /* ==========================================================================
  * Connection mode — local online/offline state (core/connection.js).

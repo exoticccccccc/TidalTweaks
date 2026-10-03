@@ -9,7 +9,7 @@
  *   • confirmAction() modal — EVERY Pro tweak must pass through it
  *   • CSS confetti celebration on Pro unlock
  *   • TWEAKS catalog: id → { title, desc, modal } rendered by tab scripts
- *   • license state → edition badge, Pro-lock overlays, crown colours
+ *   • license state → edition badge, tier gating
  *   • helpers: fmtBytes, fmtUptime, countUp (animated number transitions)
  * Tab scripts (tabs/*.js) consume all of this via window.TT.
  * ========================================================================== */
@@ -46,7 +46,7 @@
     opts = opts || {};
     const decimals = opts.decimals || 0, suffix = opts.suffix || '';
     const from = parseFloat((el.dataset.v || '0').replace(/[^0-9.\-]/g, '')) || 0;
-    const dur = 350, t0 = performance.now();
+    const dur = 400, t0 = performance.now();
     cancelAnimationFrame(el._raf || 0);
     const step = (t) => {
       const k = Math.min(1, (t - t0) / dur);
@@ -448,10 +448,10 @@
   }
   /* Render a group of tweak cards into `container`.
    * Free users SEE every tweak (transparency builds trust) but Pro-only cards
-   * get a 🔒 button that routes to Settings — no blanket overlays, so the
+   * get a tier button that routes to Settings — no blanket overlays, so the
    * FREE-tagged tweaks stay usable. Apply ALWAYS confirms first.
    * Groups re-render automatically when the license flips (see refreshLicense),
-   * so unlocking instantly swaps every 🔒 for a live button. */
+   * so unlocking instantly swaps every tier button for a live button. */
   /* Batch 6 (Issue 6): category blurbs — what the group does, who it's for,
    * warnings. Injected once per tweak-list container via its data-tweaks key. */
   const GROUP_BLURBS = {
@@ -575,10 +575,10 @@
       const applyBtn = document.createElement('button');
       if (locked) {
         applyBtn.className = 'btn secondary';
-        applyBtn.textContent = `🔒 ${TIER_NAMES[need]}`;
+        applyBtn.textContent = (TIER_NAMES[need] || 'PRO').toUpperCase();
         applyBtn.title = `Requires TidalTweaks ${TIER_NAMES[need]} ($${TIER_PRICES[need]})`;
         applyBtn.onclick = () => {
-          toast(`🔒 '${meta.t}' needs ${TIER_NAMES[need]} ($${TIER_PRICES[need]}) — opening Settings…`, 'gold', 3500);
+          toast(`'${meta.t}' needs ${TIER_NAMES[need]} ($${TIER_PRICES[need]}) — opening Settings…`, '', 3500);
           switchTab('settings');
         };
       } else {
@@ -643,7 +643,7 @@
       Object.assign(licenseState, s);
       if (typeof licenseState.tier !== 'number') licenseState.tier = 0;
       const badge = $('#edition-badge');
-      const names = ['FREE', 'BASE', 'PRO 👑', 'EXTREME 👑'];
+      const names = ['FREE', 'BASE', 'PRO', 'EXTREME'];
       const classes = ['free', 'base', 'pro', 'pro'];
       badge.textContent = names[licenseState.tier] || 'FREE';
       badge.className = 'edition ' + (classes[licenseState.tier] || 'free');
@@ -667,7 +667,7 @@
         const about = $('#about-line');
         if (about && s.version) about.textContent = `TidalTweaks v${s.version} · Electron · Windows 10/11 · No accounts, no telemetry, no payment processors.`;
       } catch { /* ignore */ }
-      // License UPGRADED? Re-render every tweak group so 🔒 buttons swap
+      // License UPGRADED? Re-render every tweak group so tier buttons swap
       // live without a restart + fire the unlock celebration.
       if (licenseState.tier !== wasTier) {
         tweakRenders.forEach((g) => renderTweaks(g.container, g.ids, true));
@@ -678,7 +678,7 @@
       }
       if (licenseState.tier > wasTier && celebrate) {
         confettiBurst(); // the unlock celebration
-        toast(`${TIER_NAMES[licenseState.tier]} unlocked — enjoy. 🎉`, 'gold', 5000);
+        toast(`${TIER_NAMES[licenseState.tier]} unlocked — enjoy.`, '', 5000);
       }
       return s;
     } catch (e) {
@@ -694,8 +694,8 @@
     try {
       const s = await api.settings.get();
       if (s && s.ok) {
-        document.body.dataset.theme = s.theme || 'tsunami';
-        document.body.dataset.accent = s.accent || 'blue';
+        document.body.dataset.theme = s.theme || 'oled';
+        document.body.dataset.accent = s.accent || 'white';
       }
     } catch (e) { /* defaults in CSS stand */ }
   }
@@ -837,20 +837,10 @@
     } catch (e) { /* subscription is best-effort */ }
     refreshConn();
   }
+  // Remodel: minimize + close only (no maximize button, no dblclick zoom).
   function wireTitlebar() {
     $('#btn-min').onclick = () => api.win.minimize();
-    $('#btn-max').onclick = () => api.win.toggleMax();
     $('#btn-close').onclick = () => api.win.close();
-    $('#titlebar').addEventListener('dblclick', (e) => {
-      if (e.target.closest('.tb-controls')) return;
-      api.win.toggleMax();
-    });
-    const sync = (m) => {
-      $('#glyph-max').hidden = !!m.maximized;
-      $('#glyph-restore').hidden = !m.maximized;
-    };
-    api.win.onState(sync);
-    api.win.isMaximized().then((m) => sync({ maximized: !!m })).catch(() => {});
   }
 
   /* -------------------------------- init --------------------------------- */
@@ -879,7 +869,7 @@
     try {
       if (sessionStorage.getItem('tt-hello-owner') === '1') {
         sessionStorage.removeItem('tt-hello-owner');
-        setTimeout(() => toast('Welcome! Your account is the owner. 👑', 'gold', 5000), 600);
+        setTimeout(() => toast('Welcome! Your account is the owner.', '', 5000), 600);
       }
     } catch (e) { /* ignore */ }
     moveGlider();
