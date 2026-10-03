@@ -4,12 +4,21 @@ Windows PC optimization and tweaking tool — **Free + Pro** desktop app built w
 
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-blue)
 ![License](https://img.shields.io/badge/license-All%20rights%20reserved-lightgrey)
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/X6ndrsJtW)
 
 ## ⬇️ Download
 
 Go to [**Releases**](../../releases) and grab `TidalTweaks Setup X.Y.Z.exe`. No Node, Python, or anything else required — download, install, run.
 
 > Windows SmartScreen will warn about an unknown publisher (no paid code-signing cert yet) → **More info → Run anyway**.
+
+## 💬 Support & community
+
+Questions, help with a tweak, or want to share results? Join the Discord:
+
+**👉 [discord.gg/X6ndrsJtW](https://discord.gg/X6ndrsJtW)**
+
+Bug reports are also welcome as GitHub Issues — but Discord gets the fastest answer.
 
 ## 🛡 Antivirus notice (please read — it's a false positive)
 **Yes, Windows Defender or VirusTotal may flag this app. No, it's not a virus.** I'm one person trying to help people speed up their PCs — there is nothing malicious in here, and you don't have to take my word for it:
@@ -25,9 +34,9 @@ See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ## ✨ Features
 
-**Free forever:** live Dashboard (CPU/RAM/GPU/disks), Junk Cleaner with file preview, Startup Manager, RAM Optimizer, Network Tools (ping graph, DNS), 40+ safe tweaks (Game Bar off, raw mouse, Copilot removal, classic context menu…), 8 one-click game presets (Fortnite, Valorant, Minecraft, Roblox, CoD, Apex, FiveM), restore points + undo, themes, local accounts.
+**Free forever:** live Dashboard (CPU/RAM/GPU/disks), Junk Cleaner with file preview, Startup Manager, RAM Optimizer, Network Tools (ping graph, DNS), 40+ safe tweaks (Game Bar off, raw mouse, Copilot removal, classic context menu…), one-click preset stacks, crosshair overlay, restore points + undo, OLED/vibrant themes, Performance Mode, in-app updates, local accounts.
 
-**Pro 👑:** 100+ paid tweaks across Base, Pro & Extreme — Ultimate Performance plan, HAGS, Nagle trio, CPU boost/core-parking/timer resolution, NVIDIA/AMD GPU tweaks, service kills, debloater, privacy lockdown (hosts block, telemetry, Recall), NTFS tuning, bcdedit timer stack — plus Pro preset stacks (Pro Gamer, Ghost, Eco).
+**Pro 👑:** 100+ paid tweaks across Base, Pro & Extreme — Ultimate Performance plan, HAGS, Nagle trio, CPU boost/core-parking/timer resolution, NVIDIA/AMD GPU tweaks, service kills, debloater, privacy lockdown (hosts block, telemetry, Recall), NTFS tuning, bcdedit timer stack — plus focused preset stacks (Max FPS, Low Latency, Competitive, Responsiveness, Privacy Max, Debloat Safe/Aggressive, Battery Saver, Focus Mode).
 
 **Safety:** every Pro tweak creates a System Restore point, snapshots the old value, and lands in the undo log. *Undo last* or *Revert all* from the Restore tab.
 
