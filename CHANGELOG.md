@@ -4,39 +4,35 @@ All notable changes, newest first. Version numbers match GitHub Releases
 (`TidalTweaks Setup X.Y.Z.exe`). Same-day releases happen when a fix can't
 wait — a higher number is always the one to download.
 
-## v3.0.0 — OLED remodel + silent everything
+## v3.0.0 — smooth base, full features, OLED default
 
-**UI remodel (fullscreen monochrome):**
-- App opens maximized and remembers its window size; titlebar is now
-  minimize + close only (floating, thin icons, draggable region).
-- Default theme is OLED black & white — pure `#000` backgrounds, flat pills,
-  zero glow, zero gradients on chrome. All 12 other themes restyled to the
-  same spacing scale with their hues intact. New Mono White accent.
-- Generous spacing everywhere (8px scale, 1200px content, 56px tweak rows,
-  36px buttons, 32px titles) and transform/opacity-only motion with
-  `prefers-reduced-motion` support.
-- Tier badges redesigned flat and minimal (BASE outline / PRO solid /
-  EXTREME solid, uppercase pills, no crowns, no glow) and every emoji
-  removed from the interface.
-- Profiles tab removed (backend kept dormant for old undo entries).
+Rebuilt on the smooth v2.4.4 animation system (restored intact, verified by
+diff — same keyframes, durations and easings) with every v3.0.0 feature
+re-applied on top. No Performance Mode by design: animations always stay on.
 
-**Fixes & behavior (all prior batches, first released here):**
-- Cleaner, RAM trim, janitor and timer holder run fully silent
-  (`windowsHide` + hidden PowerShell) with in-app progress and result panels.
-- Crosshair overlay is independent (survives main-window close), with
-  Ctrl+Shift+X toggle and a tray menu (Toggle / Open / Quit).
-- Startup deferred (window paints first, heavy work after) with tray boot;
-  quit path no longer blocks; duplicate tweak keys and version drift fixed.
-- 9 focused preset stacks replace the old 15 (Max FPS, Low Latency,
-  Competitive, Responsiveness, Privacy Max, Debloat Safe/Aggressive, Battery,
-  Focus) — each with count preview, one-click revert and toasts.
-- Hover tooltips + info modal on every tweak; category blurbs per group.
-- Tabs lazy-load on first open; Services renders in one pass with debounced
-  search; dead background watchdog removed; main process is poll-free.
-- Performance Mode toggle (5s polling, no animations, persists) now
-  applies instantly; dashboard re-arms live.
-- New app logo (icon.png/ico); in-app update checker against GitHub
-  Releases with a Settings → About button (no silent installer by design).
+**Look:** OLED black & white default (`#000` page, `#050505` sidebar,
+`#0A0A0A` cards, white text) with zero glow and zero gradients on chrome;
+flat BASE/PRO/EXTREME pills; minimize + close floating titlebar; every emoji
+replaced with text or SVG; native system font (no webfont downloads); new
+logo in the titlebar, boot splash, taskbar and installer (multi-size ICO).
+Theme switcher kept with all previous themes plus OLED and Pulse.
+
+**Window:** opens maximized on first launch, remembers size between sessions.
+**Crosshair:** independent overlay (survives main-window close), Ctrl+Shift+X
+toggle, tray with green/grey status dot (Toggle / Open / Quit).
+**Cleaner:** fully silent execution with in-app progress and result panels.
+**Presets:** 9 modern stacks (Max FPS, Low Latency, Stable Connection,
+Responsiveness, Privacy Max, Debloat Safe/Aggressive, Battery Saver, Focus)
+with count previews, one-click revert and toasts.
+**Tweaks:** hover tooltips, info modals, category blurbs and NEW
+Safe/Caution/Advanced risk badges on every card.
+**Performance:** deferred startup, lazy tabs, debounced Services search and
+render batching, poll-free main process — no modes, no animation kills.
+**Updates:** launch-time GitHub Release check with an Update Available banner
+and Download button in Settings → About.
+**Safety:** restore points and per-tweak Revert untouched — disabling a tweak
+never deletes its restore point (reverting restores the prior value; the
+restore point stays as the shared safety net).
 
 ## v2.4.4
 

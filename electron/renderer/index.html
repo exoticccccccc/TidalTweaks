@@ -28,12 +28,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <!-- Content-Security-Policy: no remote code except Google Fonts. -->
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self' https:;">
+      content="default-src 'self'; font-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:;">
 <title>TidalTweaks</title>
-<!-- Inter with system fallbacks (works offline if Google Fonts is blocked) -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<!-- Rollback Batch 9: native system font stack (no remote fonts, no FOUC). -->
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -41,7 +38,7 @@
 <!-- Boot splash: plain HTML/CSS, visible instantly with no JS. app.js removes
      it once the UI is up — if it never disappears, the renderer failed to
      load, and this message says so instead of a blank white window. -->
-<div id="boot"><div class="spinner"></div><p>Loading TidalTweaks…</p></div>
+<div id="boot"><img src="../assets/logo-64.png" class="boot-logo" alt="" /><div class="spinner"></div><p>Loading TidalTweaks…</p></div>
 
 <!-- ======================= Auth gate (sign up / log in) =======================
      Shown instead of the app shell until a device-local account signs in
@@ -83,7 +80,7 @@
       <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
     </button>
     <div class="tb-brand">
-    <svg viewBox="0 0 24 24" class="tb-wave" aria-hidden="true"><path d="M2 12c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 17c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/><path d="M2 7c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".3"/></svg>
+    <img src="../assets/logo-64.png" class="tb-logo" alt="" draggable="false" />
     <span>Tidal<em>Tweaks</em></span>
     <span id="edition-badge" class="edition free">FREE</span>
     <span id="conn-dot" class="conn-dot" title="Checking connection…"><i></i><em>…</em></span>
@@ -791,10 +788,6 @@
           </select>
         </div>
         <p class="dim" id="lite-note"></p>
-        <div class="row">
-          <label class="check"><input type="checkbox" id="perf-mode" /><span class="box"></span><span>Performance Mode — 5s monitor polling, no animations (low-end PCs)</span></label>
-        </div>
-        <p class="dim">Persists on this PC. While on: hardware monitor drops to 1 update / 5s, tab polling pauses in background, animations off, helper workloads deferred.</p>
       </div>
       <div class="glass card">
         <h3>Connection</h3>
@@ -814,6 +807,13 @@
       <div class="glass card"><h3>About</h3>
         <p class="dim" id="about-line">TidalTweaks · Electron · Windows 10/11 · No accounts, no telemetry, no payment processors.</p>
         <p class="dim">Antivirus flags? False positive — this app edits the registry and runs PowerShell like every optimizer does, so heuristics complain. Full source is on GitHub; read every line.</p>
+        <div class="glass card" id="update-banner" hidden style="margin-bottom:12px">
+          <h3>Update available</h3>
+          <p class="dim" id="update-banner-text"></p>
+          <div class="row" style="margin-bottom:0">
+            <button class="btn primary" id="update-download">Download</button>
+          </div>
+        </div>
         <div class="row">
           <button class="btn secondary" id="update-check">↻&nbsp; Check for updates</button>
         </div>

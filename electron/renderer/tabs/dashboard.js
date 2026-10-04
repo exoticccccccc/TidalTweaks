@@ -87,23 +87,11 @@
     const p = $('page-dashboard');
     return p && p.classList.contains('active');
   }
-  // Lazy + Performance Mode: nothing polls until first shown; interval is
-  // 2500 ms normal, 5000 ms in Performance Mode. Re-armed on show AND on the
-  // tt:perf event so toggling the switch takes effect immediately.
-  function intervalMs() {
-    try { if (TT.perf) return 5000; } catch { /* ignore */ }
-    return 2500;
-  }
-  function armTimer() {
-    if (timer) { try { clearInterval(timer); } catch { /* ignore */ } timer = null; }
-    timer = setInterval(() => { if (visible()) live(); }, intervalMs());
-  }
+  // Lazy: nothing polls until the dashboard is first shown. Fixed 2500 ms
+  // cadence, visible-tab only. No performance mode — animations stay on.
   TT._show.dashboard = () => {
     statics();
     live();
-    armTimer();
+    if (!timer) timer = setInterval(() => { if (visible()) live(); }, 2500);
   };
-  try {
-    window.addEventListener('tt:perf', () => { if (visible()) armTimer(); });
-  } catch { /* ignore */ }
 })();

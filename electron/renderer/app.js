@@ -46,7 +46,7 @@
     opts = opts || {};
     const decimals = opts.decimals || 0, suffix = opts.suffix || '';
     const from = parseFloat((el.dataset.v || '0').replace(/[^0-9.\-]/g, '')) || 0;
-    const dur = 400, t0 = performance.now();
+    const dur = 350, t0 = performance.now();
     cancelAnimationFrame(el._raf || 0);
     const step = (t) => {
       const k = Math.min(1, (t - t0) / dur);
@@ -484,6 +484,21 @@
     return 'Gamers / power users (Pro)';
   }
   function rebootNeeded(id) { return REBOOT_IDS.has(id); }
+  /* Risk badge (rollback Batch 7): SAFE = instantly reversible, no trade-offs;
+   * CAUTION = carries warnings or partial-manual revert; ADVANCED = Extreme
+   * tier (boot-config / security trade-offs). Same classes as the Services
+   * tab chips so the meaning is identical everywhere. */
+  function riskOf(id) {
+    if (tierOf(id) === 3) return 'advanced';
+    const m = String((TWEAKS[id] && TWEAKS[id].m) || '');
+    if (MANUAL_REVERT_IDS.has(id) || /⚠|WARNING/i.test(m)) return 'caution';
+    return 'safe';
+  }
+  const RISK_TITLE = {
+    safe: 'SAFE: instantly reversible, no trade-offs',
+    caution: 'CAUTION: read the warnings before applying',
+    advanced: 'ADVANCED: know your recovery before applying',
+  };
   /* Reversible? Everything logs a revert via backup.js except AppX/Edge/OneDrive
    * removals + one-shot repairs (kind:none) which need manual action. */
   const MANUAL_REVERT_IDS = new Set(['debloat-cortana-app', 'debloat-xbox-app', 'debloat-onedrive', 'debloat-edge', 'net-reset-stack', 'net-adapter-restart', 'net-flush-dns', 'debloat-disk-cleanup']);
@@ -499,6 +514,7 @@
       (meta.d ? meta.d + '\n\n' : '') +
       (meta.m ? 'What it changes:\n' + meta.m + '\n\n' : '') +
       `Who it's for: ${whoFor(id)}\n` +
+      `Risk: ${riskOf(id).toUpperCase()} — ${RISK_TITLE[riskOf(id)]}\n` +
       `Requires restart: ${rebootNeeded(id) ? 'YES — reboot to take effect' : 'No'}\n` +
       `Reversible: ${reversibleNote(id)}\n` +
       (warnLines.length ? `\nWarnings:\n${warnLines.join('\n')}` : '');
@@ -529,16 +545,17 @@
       const card = document.createElement('div');
       card.className = 'tweak-card';
       card.dataset.tweak = id;
-      // Hover tooltip (Issue 6.1): what + tradeoff + reboot + reversible.
+      // Hover tooltip: what + risk + reboot + reversible.
+      const risk = riskOf(id);
       try {
-        card.title = `${meta.t}\n${meta.d || ''}\nRestart: ${rebootNeeded(id) ? 'required' : 'not required'} · Reversible: ${MANUAL_REVERT_IDS.has(id) ? 'partially (see ⓘ)' : 'yes'}`;
+        card.title = `${meta.t}\n${meta.d || ''}\nRisk: ${risk.toUpperCase()} · Restart: ${rebootNeeded(id) ? 'required' : 'not required'} · Reversible: ${MANUAL_REVERT_IDS.has(id) ? 'partially (see info)' : 'yes'}`;
       } catch { /* ignore */ }
       const info = document.createElement('div');
       info.className = 'tweak-info';
       const b = document.createElement('b');
       b.textContent = meta.t;
-      // Tier badge ALWAYS visible: FREE (green) / BASE (blue) / PRO (gold) /
-      // EXTREME (red). This is the Free-vs-paid separation at a glance.
+      // Tier badge ALWAYS visible: FREE / BASE / PRO / EXTREME (flat pills).
+      // This is the Free-vs-paid separation at a glance.
       const tag = document.createElement('span');
       if (need === 0) { tag.className = 'free-tag'; tag.textContent = 'FREE'; }
       else if (need === 1) { tag.className = 'tier-tag tier-base'; tag.textContent = 'BASE'; }
@@ -563,10 +580,16 @@
       if (REBOOT_IDS.has(id)) {
         const rb = document.createElement('span');
         rb.className = 'reboot-tag';
-        rb.textContent = '⟲ reboot';
+        rb.textContent = 'reboot';
         rb.title = 'Requires a restart to take effect';
         b.append(' ', rb);
       }
+      // Risk badge: SAFE / CAUTION / ADVANCED (same chips as Services tab).
+      const riskEl = document.createElement('span');
+      riskEl.className = risk === 'advanced' ? 'adv-tag' : (risk === 'caution' ? 'caution-tag' : 'safe-tag');
+      riskEl.textContent = risk.toUpperCase();
+      riskEl.title = RISK_TITLE[risk];
+      b.append(' ', riskEl);
       const p = document.createElement('p');
       p.textContent = meta.d;
       info.append(b, p);
@@ -650,9 +673,6 @@
       document.body.classList.toggle('is-pro', licenseState.tier >= 2);
       // Lite mode: flat panels + no GPU compositing (see styles.css body.lite).
       document.body.classList.toggle('lite', !!s.lite);
-      // Batch 8 Performance Mode: 5s polling + killed animations (body.perf).
-      document.body.classList.toggle('perf', !!s.perf);
-      try { licenseState.perf = !!s.perf; } catch { /* ignore */ }
       // Personal greeting (the Risxn "Welcome, User!" touch — we have accounts).
       const dashTitle = $('#dash-title');
       if (dashTitle) dashTitle.textContent = s.username ? `Welcome, ${s.displayName || s.username}!` : 'Dashboard';
@@ -958,7 +978,6 @@
     renderTweaks, applyTweak, revertTweak, showInfo,
     refreshLicense, switchTab,
     get pro() { return licenseState.tier >= 2; }, // legacy: "pro content" gate
-    get perf() { return !!(licenseState.perf || (typeof document !== 'undefined' && document.body.classList.contains('perf'))); },
     get tier() { return licenseState.tier || 0; },
     get tierName() { return TIER_NAMES[licenseState.tier] || 'Free'; },
     get api() { return api; },

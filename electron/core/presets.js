@@ -8,11 +8,13 @@
  * stack-reset + minutes-long cleanmgr GUI + non-revertable AppX removals
  * behind one click, and per-game packs duplicated 5-6 identical safe tweaks.
  *
- * New set (9 focused stacks, Issue 5 spec): Max FPS / Low Latency /
- * Competitive / Responsiveness / Privacy Max / Debloat Safe+Aggressive /
- * Battery / Focus. Every id below is a live TWEAK_REGISTRY key (verified
- * Batch 5); redundant pairs deliberately excluded (e.g. net-no-delack already
- * covers TcpDelAckTicks=0, so net-delack-zero is NOT bundled with it).
+ * Modern set (9 focused stacks): Max FPS / Low Latency / Stable Connection /
+ * Responsiveness / Privacy Max / Debloat Safe+Aggressive / Battery / Focus.
+ * Rollback audit removed gaming-competitive (every id duplicated in the two
+ * other gaming stacks) and retired Cortana entries (dead product, MS already
+ * removed it) for Recall AI, tracker blocking and Search highlights.
+ * Every id below is a live TWEAK_REGISTRY key; redundant pairs deliberately
+ * excluded (e.g. net-no-delack already covers TcpDelAckTicks=0).
  * Runner in main.js creates ONE restore point + ONE undo entry ('preset:'+id)
  * per stack; revert via preset:revert.
  *
@@ -39,12 +41,12 @@ const PRESETS = [
     ids: ['game-no-nagle', 'net-no-delack', 'game-net-throttle-off', 'cpu-fg-priority', 'cpu-no-dynamictick', 'game-input-latency'],
   },
   {
-    id: 'gaming-competitive',
-    title: 'Gaming — Competitive (Balanced)',
-    desc: 'Safe subset of both gaming stacks, no boot edits or security trade-offs. Who: ranked players who want stability first.',
+    id: 'network-stable',
+    title: 'Network — Stable Connection',
+    desc: 'For Wi-Fi and laptop gamers: fast redundant DNS, fresh lookups, adapters that never nap, smarter congestion handling. Who: anyone on wireless or bufferbloated lines.',
     os: 'both',
-    warn: 'Applies 7 safe tweaks: Game Bar off, FSO bypass, Game Mode on, raw mouse, throttling off, delayed-ACK off, responsiveness floor.\nNo reboot needed. Fully reversible.',
-    ids: ['game-bar-off', 'game-no-fs-optim', 'game-mode-win-on', 'game-mouse-raw', 'game-net-throttle-off', 'net-no-delack', 'game-sys-responsiveness'],
+    warn: 'Applies 5 tweaks: low-latency DNS pair, DNS cache tune, NIC power-saving off, NIC eco features off, ECN on.\nBrief DNS blip possible; NIC changes want a REBOOT. Fully reversible.',
+    ids: ['net-fast-dns-pair', 'net-dns-tune', 'net-nic-powersave-off', 'net-nic-eco-off', 'net-ecn-on'],
   },
   {
     id: 'desktop-responsiveness',
@@ -57,18 +59,18 @@ const PRESETS = [
   {
     id: 'privacy-maximum',
     title: 'Privacy — Maximum',
-    desc: 'Locks down tracking without breaking logins: telemetry, ad ID, Cortana, location, history. Who: privacy-focused users.',
+    desc: 'Locks down tracking without breaking logins: telemetry, ad ID, Recall AI, tracker domains, location, history. Who: privacy-focused users.',
     os: 'both',
-    warn: 'Applies 7 tweaks: telemetry off, ad ID off, tailored experiences off, Cortana data off, location off, Activity History off, clipboard history off.\nMaps/Find-my-device and Win+V history stop working. No reboot. Reversible.',
-    ids: ['priv-no-telemetry', 'priv-no-adid', 'priv-no-tailored', 'priv-no-cortana', 'priv-no-location', 'adv-no-activity', 'adv-no-clipboard-hist'],
+    warn: 'Applies 8 tweaks: telemetry off, ad ID off, tailored experiences off, Recall/AI analysis off, tracker-domain block, location off, Activity History off, clipboard history off.\nRecall switch matters on Copilot+ Win11; Maps/Find-my-device and Win+V history stop working. No reboot. Reversible.',
+    ids: ['priv-no-telemetry', 'priv-no-adid', 'priv-no-tailored', 'priv-no-recall', 'priv-block-trackers', 'priv-no-location', 'adv-no-activity', 'adv-no-clipboard-hist'],
   },
   {
     id: 'debloat-safe',
     title: 'Debloat — Safe',
     desc: 'Removes only expendable extras + silences suggestions. No critical apps touched. Who: clean-install feel without risk.',
     os: 'both',
-    warn: 'Applies 7 tweaks: Cortana app + Xbox app removal (reinstall via Store if missed — NOT auto-revertable), Chrome background off, tips/sponsored-apps/Copilot/Widgets off.\nOne restore point; AppX removals need Store reinstall to come back.',
-    ids: ['debloat-cortana-app', 'debloat-xbox-app', 'debloat-chrome-bg', 'adv-no-tips', 'adv-consumer-feats', 'adv-no-copilot', 'adv-no-widgets'],
+    warn: 'Applies 7 tweaks: Xbox app removal (reinstall via Store if missed — NOT auto-revertable), Chrome background off, tips/sponsored-apps/Copilot/Widgets/Search-highlights off.\nOne restore point; AppX removals need Store reinstall to come back.',
+    ids: ['debloat-xbox-app', 'debloat-chrome-bg', 'adv-no-tips', 'adv-consumer-feats', 'adv-no-copilot', 'adv-no-widgets', 'adv-no-search-highlights'],
   },
   {
     id: 'debloat-aggressive',
@@ -76,7 +78,7 @@ const PRESETS = [
     desc: 'Safe set plus OneDrive removal + Xbox services/bar kills. Who: gamers who never touch Xbox/OneDrive. Edge is NOT touched.',
     os: 'both',
     warn: 'Applies 10 tweaks: safe set + OneDrive uninstall (files stay in cloud), Xbox services off, Xbox Game Bar off.\nXbox sign-in/party chat stops until reverted. Edge untouched. Reboot recommended.',
-    ids: ['debloat-cortana-app', 'debloat-xbox-app', 'debloat-chrome-bg', 'adv-no-tips', 'adv-consumer-feats', 'adv-no-copilot', 'adv-no-widgets', 'debloat-onedrive', 'svc-xbox-off', 'adv-no-xbox-bar'],
+    ids: ['debloat-xbox-app', 'debloat-chrome-bg', 'adv-no-tips', 'adv-consumer-feats', 'adv-no-copilot', 'adv-no-widgets', 'adv-no-search-highlights', 'debloat-onedrive', 'svc-xbox-off', 'adv-no-xbox-bar'],
   },
   {
     id: 'battery-saver',

@@ -33,7 +33,6 @@ const store = new Store({
     code: null,
     activatedAt: null,
     liteMode: 'auto', // 'auto' | 'on' | 'off' — see resolveLite()
-    perfMode: false, // Batch 8 Performance Mode (Issue 4): 5s polling, no anim
     windowBounds: null, // UI remodel Batch 1: last size/pos/maximized (null = maximize)
     theme: 'oled',  // UI remodel: OLED monochrome is the default
     accent: 'blue',    // blue | gold | violet | mint | rose
@@ -334,7 +333,8 @@ function crosshairEnabledNow() {
 
 function buildTrayMenu() {
   const on = crosshairEnabledNow();
-  // Green/grey equivalent until Batch 8 icon art: checked + explicit ON/OFF label.
+  // Explicit ON/OFF label + checkbox; the tray IMAGE (green/grey dot) swaps
+  // separately in updateTrayState.
   return Menu.buildFromTemplate([
     {
       id: 'toggle',
@@ -367,13 +367,21 @@ function buildTrayMenu() {
   ]);
 }
 
-// Batch 4 (Issue 3-B): tray persists with its own menu even when the main
-// window is hidden/closed. Checkbox + tooltip reflect live overlay state.
+// Tray persists with its own menu even when the main window is hidden/closed.
+// Rollback Batch 3: real green/grey status icons (assets/tray-on|off.png,
+// generated from the logo) swap with the overlay state, alongside the
+// checkbox menu + tooltip.
+let trayImgOn = null;
+let trayImgOff = null;
 function updateTrayState() {
   try {
     if (!tray) return;
     const on = crosshairEnabledNow();
-    tray.setToolTip(on ? 'TidalTweaks — ● crosshair ON' : 'TidalTweaks — ○ crosshair OFF');
+    try {
+      const img = on ? trayImgOn : trayImgOff;
+      if (img && !img.isEmpty()) tray.setImage(img);
+    } catch { /* keep previous icon */ }
+    tray.setToolTip(on ? 'TidalTweaks — crosshair ON' : 'TidalTweaks — crosshair OFF');
     try { tray.setContextMenu(buildTrayMenu()); } catch { /* ignore */ }
   } catch { /* ignore */ }
 }
@@ -381,10 +389,10 @@ function updateTrayState() {
 function ensureTray() {
   if (tray) { updateTrayState(); return tray; }
   try {
-    const iconPath = path.join(__dirname, 'assets', 'icon.png');
-    let img = null;
-    try { img = nativeImage.createFromPath(iconPath); } catch { img = null; }
-    tray = new Tray((img && !img.isEmpty()) ? img : nativeImage.createEmpty());
+    try { trayImgOn = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray-on.png')); } catch { trayImgOn = null; }
+    try { trayImgOff = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray-off.png')); } catch { trayImgOff = null; }
+    const start = (trayImgOff && !trayImgOff.isEmpty()) ? trayImgOff : nativeImage.createEmpty();
+    tray = new Tray(start);
     tray.setToolTip('TidalTweaks');
     tray.setContextMenu(buildTrayMenu());
     tray.on('click', () => showMain());
@@ -1011,7 +1019,6 @@ ipcMain.handle('license:status', () => {
     displayName: (me && (me.displayName || me.username)) || null,
     role: (me && me.role) || null,
     version: APP_VERSION_EARLY,
-    perf: !!store.get('perfMode'), // Batch 8 Performance Mode (Issue 4)
   };
 });
 ipcMain.handle('app:version', () => ({ ok: true, version: APP_VERSION_EARLY }));
@@ -1075,6 +1082,14 @@ async function checkForUpdates(isManual) {
   }
 }
 ipcMain.handle('app:check-update', async () => checkForUpdates(true));
+ipcMain.handle('app:open-releases', async () => {
+  try {
+    await shell.openExternal(`https://github.com/${UPDATE_REPO}/releases`);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: String((err && err.message) || err) };
+  }
+});
 // Deferred auto-check: 30s after boot, at most daily. Result pushed to UI.
 function scheduleUpdateCheck() {
   setTimeout(async () => {
@@ -1105,7 +1120,6 @@ ipcMain.handle('settings:get', () => ({
   ok: true,
   theme: THEMES.includes(store.get('theme')) ? store.get('theme') : 'oled',
   accent: ACCENTS.includes(store.get('accent')) ? store.get('accent') : 'white',
-  perfMode: !!store.get('perfMode'),
   priorityGames: Array.isArray(store.get('priorityGames')) ? store.get('priorityGames') : [],
   // Last used crosshair design (Crosshair tab). Sanitized in core/crosshair.js.
   crosshair: crosshair.getConfig(),
@@ -1133,11 +1147,7 @@ ipcMain.handle('settings:set', (_e, patch = {}) => {
   if (patch.crosshair !== undefined) {
     try { crosshair.setConfig(patch.crosshair || {}); } catch { /* ignore */ }
   }
-  // Batch 8 Performance Mode (Issue 4): persists via electron-store.
-  if (patch.perfMode !== undefined) {
-    store.set('perfMode', !!patch.perfMode);
-  }
-  return { ok: true, theme: store.get('theme'), accent: store.get('accent'), perfMode: !!store.get('perfMode'), priorityGames: store.get('priorityGames') || [], crosshair: crosshair.getConfig() };
+  return { ok: true, theme: store.get('theme'), accent: store.get('accent'), priorityGames: store.get('priorityGames') || [], crosshair: crosshair.getConfig() };
 });
 
 /* ==========================================================================

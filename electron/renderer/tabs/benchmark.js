@@ -290,7 +290,7 @@
     const runs = filteredHistory().map((r) => ({ at: r.at, o: overall(r) })).filter((p) => p.o !== null);
     if (runs.length < 1) {
       ctx.fillStyle = '#7C93B5';
-      ctx.font = '12px Inter, sans-serif';
+      ctx.font = '12px Segoe UI, sans-serif';
       ctx.fillText(runs.length ? 'Not enough scored runs yet.' : 'No runs in range — run a benchmark first.', 16, H / 2);
       return;
     }
@@ -326,7 +326,7 @@
     ctx.stroke();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#E7E9EE';
-    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.font = 'bold 12px Segoe UI, sans-serif';
     ctx.fillText(`${lo} – ${hi} pts`, 14, 16);
   }
   function paintHistory() {
@@ -422,17 +422,17 @@
     ctx.fillStyle = '#0D2140';
     ctx.fillRect(0, 0, 640, 360);
     ctx.fillStyle = '#5B8DF6';
-    ctx.font = 'bold 26px Inter, sans-serif';
+    ctx.font = 'bold 26px Segoe UI, sans-serif';
     ctx.fillText('TidalTweaks Benchmark', 28, 48);
     ctx.fillStyle = '#A9C0DD';
-    ctx.font = '14px Inter, sans-serif';
+    ctx.font = '14px Segoe UI, sans-serif';
     ctx.fillText(new Date(run.at).toLocaleString(), 28, 74);
     const o = overall(run);
     ctx.fillStyle = '#E7E9EE';
-    ctx.font = 'bold 64px Inter, sans-serif';
+    ctx.font = 'bold 64px Segoe UI, sans-serif';
     ctx.fillText(o === null ? '–' : String(o), 28, 150);
     ctx.fillStyle = '#7C93B5';
-    ctx.font = '14px Inter, sans-serif';
+    ctx.font = '14px Segoe UI, sans-serif';
     ctx.fillText('OVERALL SCORE', 30, 172);
     const lines = [
       `CPU  single ${run.cpu ? run.cpu.single : '–'} · multi ${run.cpu ? run.cpu.multi : '–'}`,
@@ -442,7 +442,7 @@
       `Tweaks active: ${(run.tweaks || []).length}${(run.tweaks || []).length ? ' (' + run.tweaks.slice(0, 6).join(', ') + ((run.tweaks.length > 6) ? '…' : '') + ')' : ''}`,
     ];
     ctx.fillStyle = '#E7E9EE';
-    ctx.font = '14px Inter, sans-serif';
+    ctx.font = '14px Segoe UI, sans-serif';
     lines.forEach((l, i) => ctx.fillText(l, 28, 208 + i * 26));
     const a = document.createElement('a');
     a.href = cv.toDataURL('image/png');

@@ -15,7 +15,7 @@
     ctx.clearRect(0, 0, W, H);
     if (!samples.length) {
       ctx.fillStyle = '#7C93B5';
-      ctx.font = '12px Inter, sans-serif';
+      ctx.font = '12px Segoe UI, sans-serif';
       ctx.fillText('Run a ping test to draw the graph…', 16, H / 2);
       return;
     }
@@ -45,7 +45,7 @@
     // Last-value label
     const last = samples[samples.length - 1];
     ctx.fillStyle = '#E7E9EE';
-    ctx.font = 'bold 13px Inter, sans-serif';
+    ctx.font = 'bold 13px Segoe UI, sans-serif';
     ctx.fillText(`${Math.round(last)} ms`, W - 62, py(last) - 8);
   }
 

@@ -113,6 +113,7 @@ contextBridge.exposeInMainWorld('api', {
   app: {
     version: () => ipcRenderer.invoke('app:version'),
     checkUpdate: () => ipcRenderer.invoke('app:check-update'),
+    openReleases: () => ipcRenderer.invoke('app:open-releases'),
     onUpdateAvailable: (cb) => {
       const listener = (_e, info) => cb(info);
       ipcRenderer.on('app:update-available', listener);

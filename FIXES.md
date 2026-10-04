@@ -1,3 +1,45 @@
+# TidalTweaks — Rollback to v2.4.4 + Feature Re-application Log (new project, 2026-10-04)
+
+> v3.0.0 removed for choppy animations. Base = pristine v2.4.4
+> (`electron/v2.4.4 Source Code/TidalTweaks-2.4.4.zip`, verified byte-identical
+> to git commit `12a42ea` modulo ANSI/UTF-8 dash encoding; no v3.0.0 folder
+> exists — v3.0.0 lives only in git history + tag). The zip folder is gitignored
+> and never committed. Animation-affecting files are restored from `12a42ea`
+> (`styles.css`, `countUp` 350ms); every other v3.0.0 feature file stays as-is.
+> v3.0.0's animation code (remodel Batch 2 stylesheet) is quarantined, never copied.
+
+## What is being ADDED on top of v2.4.4 (batches 2–11)
+- B2 OLED palette-only deltas on the v2.4.4 stylesheet (vars, flat badges,
+  titlebar sizing). Keyframes, durations, easings untouched. `btnPulse` keeps
+  2.4s timing, opacity-only (no glow) to satisfy the no-glow rule. Toggle knob
+  keeps v2.4.4's `left` transition (animation system preserved as ordered).
+- B3 window: maximized-by-default + bounds memory, min+close titlebar, tray,
+  Ctrl+Shift+X, deferred startup, async quit (all non-animation, kept).
+- B4 overlay independence (`closable:false`, hide-on-close) + tray menu with
+  generated green/grey dot icons (new asset work, not copied code).
+- B5 silent cleaner/janitor (`windowsHide` + `-WindowStyle Hidden`), busy
+  guards, in-app progress + results.
+- B6 nine presets + `preset:revert` + preview count + toasts (data only).
+- B7 tooltips + info modals + category blurbs + NEW Safe/Caution/Advanced
+  per-tweak badges (v3.0.0 never had these).
+- B8 flat tier badges (adapted onto v2.4.4 base) + full emoji purge.
+- B9 logo swap: 64px UI copy for titlebar/boot splash, 256-wrap ICO for
+  installer/taskbar (multi-entry ICO attempted, NSIS-validated fallback kept).
+- B10 Performance Mode REMOVED per user request (animations stay on) — store
+  key, IPC, checkbox, body.perf rules, 5s polling and tt:perf event deleted;
+  dashboard fixed at 2500ms. Lite mode (v2.4.4 base behavior) untouched.
+- B11 update banner + Download button in About (v3.0.0 had toast + line only).
+
+## What is being CHANGED vs v3.0.0 (rollback deltas)
+- `styles.css`: restored to v2.4.4 (pageIn 14px/220ms, no stagger, glow-era
+  keyframes intact) then palette-swapped. Rise/spring additions dropped.
+- `countUp`: 400ms back to v2.4.4's 350ms.
+- Default theme `tsunami`→`oled`, accent `blue`→`white` (kept from v3.0.0).
+- Profiles tab stays removed; watchdog stays retired.
+- Activation, license, backup/undo systems: untouched throughout.
+
+---
+
 # TidalTweaks — Bug Audit & Fix Log (Batches 1-2)
 
 > Version audited: `electron/package.json` 2.4.4 (About page still says 2.4.4).

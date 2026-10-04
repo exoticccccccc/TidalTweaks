@@ -14,3 +14,5 @@ PRIVATE-KEY*
 *.pem
 # Seller ops notes — private, local only (never on GitHub)
 SELLER.md
+# v2.4.4 rollback reference (local zip, never commit — base lives in git as 12a42ea)
+electron/v2.4.4 Source Code/
